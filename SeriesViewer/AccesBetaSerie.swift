@@ -10,7 +10,7 @@ import Foundation
 
 class AccesBetaSerie : NSObject{
     
-    private let cleAPI = "e88a334499a9"
+    private let cleAPI = ""
     private let betaSerie: BetaSeries
     
     internal struct Static {
