@@ -13,23 +13,19 @@ import AppKit
 class MenuSeriesController: NSViewController, NSOutlineViewDataSource, NSOutlineViewDelegate {
     
     @IBOutlet weak var outlineView: NSOutlineView!
-    var series: [Serie] = [Serie]()
+    var series: [HeaderItem] = [HeaderItem(nom: "Séries Actives"), HeaderItem(nom: "Séries Archivées")]
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        let serie1 = Serie(nom: "Série Test")
+        let serie1 = Serie(nom: "Série Test", active: true, url: "")
         serie1.creerSaison(1)
         serie1.ajouterEpisode("Il était une fois..", description: "", aSaison: 1)
-        let serie2 = Serie(nom: "Série 2")
-        self.series.append(serie1)
-        self.series.append(serie2)
+        let serie2 = Serie(nom: "Série 2", active: false, url: "")
+
+        self.recupereSeries([serie1, serie2])
         
         NSNotificationCenter.defaultCenter().addObserver(self, selector:"recupereSeries:", name:"recuperationSeries", object:nil)
         NSNotificationCenter.defaultCenter().addObserver(self, selector:"afficheDemandeMembre", name:"afficheDemandeMembre", object:nil)
-
-        
-
-        // Do view setup here.
     }
     
     override func viewDidAppear() {
@@ -73,6 +69,9 @@ class MenuSeriesController: NSViewController, NSOutlineViewDataSource, NSOutline
             case is Episode:
                 identifier = "EpisodeCell"
             
+            case is HeaderItem:
+                identifier = "HeaderCell"
+            
             default:
                 identifier = "DataCell"
         }
@@ -85,10 +84,18 @@ class MenuSeriesController: NSViewController, NSOutlineViewDataSource, NSOutline
     
     func recupereSeries(notification: NSNotification) {
         if let series = notification.userInfo?["series"] as? [Serie] {
-            dispatch_async(dispatch_get_main_queue(), {
-                self.series = series
+            self.recupereSeries(series)
+        }
+    }
+    
+    func recupereSeries(series: [Serie]) {
+        self.series[0].viderSeries()
+        self.series[1].viderSeries()
+        for serie in series {
+            dispatch_async(dispatch_get_main_queue()) {
+                self.series[serie.active == true ? 0 : 1].ajouterSerie(serie)
                 self.outlineView?.reloadData()
-            })
+            }
         }
     }
     

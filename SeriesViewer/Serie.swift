@@ -9,17 +9,21 @@
 import Foundation
 
 class Serie : MenuItem{
+    var active: Bool
+    var url: String
     //var image: IKImage?
     
-    init(nom: String) {
+    init(nom: String, active: Bool, url: String) {
+        self.active = active
+        self.url = url
         super.init(nom: nom, items: [Saison]())
     }
     
-    func ajouteSaison(saison: Saison) {
+     func ajouteSaison(saison: Saison) {
         self.items.append(saison)
     }
     
-    func creerSaison(numSaison: Int, nomSaison: String = "") {
+     func creerSaison(numSaison: Int, nomSaison: String = "") {
         var saisons = self.items.filter { let saison = $0 as Saison; return saison.numeroSaison == numSaison }
         if saisons.count == 0 {
             let saison = Saison(numero: numSaison, nomSaison: nomSaison)
@@ -27,7 +31,7 @@ class Serie : MenuItem{
         }
     }
     
-    func ajouterEpisode(nomEpisode: String, description: String, aSaison numSaison:Int) {
+     func ajouterEpisode(nomEpisode: String, description: String, aSaison numSaison:Int) {
         var saison = self.items.filter { let saison = $0 as Saison; return saison.numeroSaison == numSaison }[0] as Saison
 
         saison.creerEpisode(nomEpisode, description: description)

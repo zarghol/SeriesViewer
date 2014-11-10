@@ -29,5 +29,15 @@ extension String {
         }
         return self
     }
+    
+    var intValue: Int {
+        let nsself = self as NSString
+        return nsself.integerValue ?? 0
+    }
+    
+    var floatValue: Float {
+        let nsself = self as NSString
+        return nsself.floatValue ?? 0.0
+    }
 }
 

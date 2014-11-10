@@ -13,6 +13,8 @@ class AccesBetaSerie : NSObject{
     private let cleAPI = "e88a334499a9"
     private let betaSerie: BetaSeries
     
+    private(set) var member: Member?
+    
     internal struct Static {
         static let instance = AccesBetaSerie()
     }
@@ -94,18 +96,13 @@ class AccesBetaSerie : NSObject{
     }
     
     func finRecupereSeries(notification: NSNotification) {
-        var series = [Serie]()
-        if let noms = notification.userInfo?["nomSeries"] as? [String] {
-            NSLog("nomsSeries")
-            for nomSerie in noms {
-                var serie = Serie(nom: nomSerie)
-                series.append(serie)
-                // recupere infos series ?
-            }
+        if let member = notification.userInfo?["member"] as? Member {
+            self.member = member
         }
-        NSNotificationCenter.defaultCenter().postNotificationName("recuperationSeries", object: self, userInfo:["series" : series])
-
-        // Notification avec les séries
+        
+        if let series = notification.userInfo?["series"] as? [Serie] {
+            NSNotificationCenter.defaultCenter().postNotificationName("recuperationSeries", object: self, userInfo:["series" : series])
+        }
     }
     
     func chercheSerie(nom: String) {

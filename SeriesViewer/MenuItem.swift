@@ -7,7 +7,6 @@
 //
 
 import Cocoa
-import Foundation
 
 class MenuItem: NSObject, Equatable {
     private(set) var nomItem: String

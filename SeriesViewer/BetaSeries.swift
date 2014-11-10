@@ -98,15 +98,38 @@ class BetaSeries {
         
         request.send(completionHandler: { root in
             
-            var noms = [String]()
+            var series = [Serie]()
+            var memb: Member?
             if let member = root.objectForKey("member") as? NSDictionary {
                 if let shows = member.objectForKey("shows") as? NSDictionary {
                     for show in shows.allValues {
-                        noms.append(show["title"] as String)
+                        let title = show["title"] as String
+                        let object: AnyObject = show["archive"] ?? "0"
+                        let active =  object as NSString  == "0"
+                        let url = show["url"] as String
+                        series.append(Serie(nom: title, active: active, url: url))
                     }
                 }
+                let login = member.objectForKey("login") as String
+                let avatarUrl = member.objectForKey("avatar") as String
+                var badges = 0
+                var episodes = 0
+                var progress: Float = 0.0
+                var seasons = 0
+                var shows = 0
+                if let stats = member.objectForKey("stats") as? NSDictionary {
+                    badges = (stats.objectForKey("badges") as NSNumber).integerValue
+                    episodes = (stats.objectForKey("episodes") as NSNumber).integerValue
+                    //progress = (stats.objectForKey("progress") as NSNumber).floatValue
+                    seasons = (stats.objectForKey("seasons") as NSNumber).integerValue
+                    shows = (stats.objectForKey("shows") as NSNumber).integerValue
+
+                }
+                memb = Member(login: login, nbBadges: badges, nbEpisodes: episodes, progress: progress, seasons: seasons, nbShows: shows)
+                
             }
-            NSNotificationCenter.defaultCenter().postNotificationName("resultatMembre", object: self, userInfo:["nomSeries" : noms])
+            let userInfo : [String: NSObject] = ["series" : series]
+            NSNotificationCenter.defaultCenter().postNotificationName("resultatMembre", object: self, userInfo:userInfo)
 
         }, handleError:self.didFail)
     }
@@ -134,7 +157,7 @@ class BetaSeries {
         request.token = self.token
         request.category = BSRequestCategory.Members
         request.method = BSRequestMethod.Destroy
-        request.send(completionHandler: {response in }, handleError: self.didFail)
+        request.send(completionHandler: {_ in }, handleError: self.didFail)
     }
     
     func didFail(error: NSError) {

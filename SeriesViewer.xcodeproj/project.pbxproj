@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		EB1BA0631A1030E500C41768 /* Member.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB1BA0621A1030E500C41768 /* Member.swift */; };
+		EB1BA0681A1036EF00C41768 /* HeaderItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB1BA0671A1036EF00C41768 /* HeaderItem.swift */; };
 		EB4E0D1519FFBDB600CE8CAB /* WindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB4E0D1419FFBDB600CE8CAB /* WindowController.swift */; };
 		EB4E0D1719FFC5E000CE8CAB /* CompteController.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB4E0D1619FFC5E000CE8CAB /* CompteController.swift */; };
 		EB63253819FDDC8700978001 /* IdentificationController.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB63253719FDDC8700978001 /* IdentificationController.swift */; };
@@ -27,6 +29,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		EB1BA0621A1030E500C41768 /* Member.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Member.swift; path = ../Member.swift; sourceTree = "<group>"; };
+		EB1BA0671A1036EF00C41768 /* HeaderItem.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HeaderItem.swift; sourceTree = "<group>"; };
 		EB4E0D1419FFBDB600CE8CAB /* WindowController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WindowController.swift; sourceTree = "<group>"; };
 		EB4E0D1619FFC5E000CE8CAB /* CompteController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CompteController.swift; sourceTree = "<group>"; };
 		EB63253719FDDC8700978001 /* IdentificationController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IdentificationController.swift; sourceTree = "<group>"; };
@@ -61,6 +65,44 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		EB1BA0641A10325500C41768 /* BetaSeries */ = {
+			isa = PBXGroup;
+			children = (
+				EBF9783319FE969900879581 /* AccesBetaSerie.swift */,
+				EBF9784519FEBB1200879581 /* BetaSeries.swift */,
+				EBF9784719FEBEA500879581 /* BSRequest.swift */,
+			);
+			name = BetaSeries;
+			sourceTree = "<group>";
+		};
+		EB1BA0651A10326D00C41768 /* Model */ = {
+			isa = PBXGroup;
+			children = (
+				EBF9784B19FF0BFF00879581 /* BridgingHeader.h */,
+				EB97E35519FDB18D006BA251 /* MenuItem.swift */,
+				EB1BA0671A1036EF00C41768 /* HeaderItem.swift */,
+				EB97E34D19FD3E0E006BA251 /* Serie.swift */,
+				EB97E34F19FD3E9C006BA251 /* Saison.swift */,
+				EB97E35119FD3EEA006BA251 /* Episode.swift */,
+				EB1BA0621A1030E500C41768 /* Member.swift */,
+				EB1BA0641A10325500C41768 /* BetaSeries */,
+				EBF9784919FF07E300879581 /* Extensions.swift */,
+			);
+			name = Model;
+			sourceTree = "<group>";
+		};
+		EB1BA0661A10327600C41768 /* Controller */ = {
+			isa = PBXGroup;
+			children = (
+				EB4E0D1419FFBDB600CE8CAB /* WindowController.swift */,
+				EB97E34B19FD3BE0006BA251 /* MenuSeriesController.swift */,
+				EB63253719FDDC8700978001 /* IdentificationController.swift */,
+				EBF9782F19FE93E100879581 /* SearchSerieController.swift */,
+				EB4E0D1619FFC5E000CE8CAB /* CompteController.swift */,
+			);
+			name = Controller;
+			sourceTree = "<group>";
+		};
 		EBCBC87319F1D9D800EC200D = {
 			isa = PBXGroup;
 			children = (
@@ -85,22 +127,9 @@
 				EBCBC88519F1D9D800EC200D /* Images.xcassets */,
 				EBCBC88719F1D9D800EC200D /* Main.storyboard */,
 				EBCBC87F19F1D9D800EC200D /* Supporting Files */,
-				EB4E0D1419FFBDB600CE8CAB /* WindowController.swift */,
-				EB97E34B19FD3BE0006BA251 /* MenuSeriesController.swift */,
-				EB63253719FDDC8700978001 /* IdentificationController.swift */,
-				EBF9782F19FE93E100879581 /* SearchSerieController.swift */,
-				EB4E0D1619FFC5E000CE8CAB /* CompteController.swift */,
-				EB97E35519FDB18D006BA251 /* MenuItem.swift */,
-				EB97E34D19FD3E0E006BA251 /* Serie.swift */,
-				EB97E34F19FD3E9C006BA251 /* Saison.swift */,
-				EB97E35119FD3EEA006BA251 /* Episode.swift */,
-				EBF9783319FE969900879581 /* AccesBetaSerie.swift */,
-				EBF9784519FEBB1200879581 /* BetaSeries.swift */,
-				EBF9784719FEBEA500879581 /* BSRequest.swift */,
-				EBF9784919FF07E300879581 /* Extensions.swift */,
-				EBF9784B19FF0BFF00879581 /* BridgingHeader.h */,
+				EB1BA0661A10327600C41768 /* Controller */,
+				EB1BA0651A10326D00C41768 /* Model */,
 			);
-			name = SeriesViewer;
 			path = SeriesViewer;
 			sourceTree = "<group>";
 		};
@@ -184,7 +213,9 @@
 				EBF9783119FE93E100879581 /* SearchSerieController.swift in Sources */,
 				EB97E35619FDB18D006BA251 /* MenuItem.swift in Sources */,
 				EB97E35219FD3EEA006BA251 /* Episode.swift in Sources */,
+				EB1BA0681A1036EF00C41768 /* HeaderItem.swift in Sources */,
 				EB97E35019FD3E9C006BA251 /* Saison.swift in Sources */,
+				EB1BA0631A1030E500C41768 /* Member.swift in Sources */,
 				EBCBC88219F1D9D800EC200D /* AppDelegate.swift in Sources */,
 				EBF9784819FEBEA500879581 /* BSRequest.swift in Sources */,
 				EB97E34E19FD3E0E006BA251 /* Serie.swift in Sources */,
