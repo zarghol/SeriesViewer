@@ -67,6 +67,7 @@ class BSRequest {
     var method: BSRequestMethod
     var object: BSRequestObject?
     var options: BSRequestOptions
+    var urlSupp: String?
     
     //var delegate: BSRequestDelegate
     
@@ -81,14 +82,16 @@ class BSRequest {
         self.method = BSRequestMethod.Home
         self.object = nil
         self.options = [String: String]()
+
         //self.delegate = delegate
+        
         
         self.request = NSMutableURLRequest()
         let conf = NSURLSessionConfiguration.defaultSessionConfiguration()
         self.session = NSURLSession(configuration:conf)
     }
     
-    func send(#completionHandler:(NSDictionary) -> (), handleError:(NSError) -> ()) {
+    func send(#completionHandler:(JSON) -> (), handleError:(NSError) -> ()) {
         self.request.URL = NSURL(string: self.urlStringForRequest())
 
         self.request.timeoutInterval = self.timeout
@@ -101,23 +104,27 @@ class BSRequest {
             } else {
                 var error: NSError?
                 
-                let response = NSJSONSerialization.JSONObjectWithData(data, options:.AllowFragments, error: &error) as NSDictionary
+                let response = JSON(data: data, error: &error)
+                
+                let responseAffiche = NSJSONSerialization.JSONObjectWithData(data, options:.AllowFragments, error: &error) as NSDictionary
                 if let err = error {
                     handleError(err)
                 } else {
-                    NSLog("infos recue : \(response)")
+                    //NSLog("infos recue : \(responseAffiche)")
 
-                    let root = response.objectForKey("root") as NSDictionary
-                    
+                    let root = response["root"]
+                    var error2: NSError?
                     var errorAvere = false
+                    
+                    let err = root["errors"]["error"]
 
-                    if let err = root.objectForKey("errors") as? NSDictionary {
-                        if let err2 = err.objectForKey("error") as? NSDictionary {
-                            errorAvere = true
-                            let code = err2.objectForKey("code") as Int
-                            var nouvelleError = NSError(domain:"BetaSerieError", code:code, userInfo: err2)
-                            handleError(nouvelleError)
-                        }
+                    if err != JSON.Null(error2) {
+                        errorAvere = true
+                        let code = err["code"].integerValue!
+                        println("err : \(err)")
+                        
+                        var nouvelleError = NSError(domain:"BetaSerieError", code:code, userInfo: nil)
+                        handleError(nouvelleError)
                     }
                     
                     if !errorAvere {

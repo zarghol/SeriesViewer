@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.Storyboard.XIB" version="3.0" toolsVersion="6250" systemVersion="14A389" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" initialViewController="6Im-2G-Yng">
+<document type="com.apple.InterfaceBuilder3.Cocoa.Storyboard.XIB" version="3.0" toolsVersion="6254" systemVersion="14B25" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" initialViewController="6Im-2G-Yng">
     <dependencies>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="6250"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="6254"/>
     </dependencies>
     <scenes>
         <!--Application-->
@@ -700,12 +700,12 @@
                                 <rect key="frame" x="0.0" y="0.0" width="783" height="503"/>
                                 <subviews>
                                     <customView id="nyr-Ts-A0j">
-                                        <rect key="frame" x="0.0" y="0.0" width="214" height="503"/>
+                                        <rect key="frame" x="0.0" y="0.0" width="213" height="503"/>
                                         <autoresizingMask key="autoresizingMask"/>
                                         <subviews>
-                                            <scrollView borderType="none" autohidesScrollers="YES" horizontalLineScroll="26" horizontalPageScroll="10" verticalLineScroll="26" verticalPageScroll="10" usesPredominantAxisScrolling="NO" translatesAutoresizingMaskIntoConstraints="NO" id="MBc-4s-kGr">
+                                            <scrollView misplaced="YES" borderType="none" autohidesScrollers="YES" horizontalLineScroll="26" horizontalPageScroll="10" verticalLineScroll="26" verticalPageScroll="10" usesPredominantAxisScrolling="NO" translatesAutoresizingMaskIntoConstraints="NO" id="MBc-4s-kGr">
                                                 <rect key="frame" x="0.0" y="0.0" width="214" height="503"/>
-                                                <clipView key="contentView" drawsBackground="NO" id="2br-fF-jHj">
+                                                <clipView key="contentView" misplaced="YES" drawsBackground="NO" id="2br-fF-jHj">
                                                     <rect key="frame" x="1" y="1" width="148" height="398"/>
                                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                     <subviews>
@@ -839,26 +839,17 @@
                                             <constraint firstAttribute="trailing" secondItem="MBc-4s-kGr" secondAttribute="trailing" id="mMI-wm-YfX"/>
                                         </constraints>
                                     </customView>
-                                    <customView id="Vha-je-HBc">
-                                        <rect key="frame" x="215" y="0.0" width="568" height="503"/>
+                                    <customView fixedFrame="YES" id="Vha-je-HBc">
+                                        <rect key="frame" x="214" y="0.0" width="568" height="503"/>
                                         <autoresizingMask key="autoresizingMask"/>
-                                        <subviews>
-                                            <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="HPC-bX-tgo">
-                                                <rect key="frame" x="213" y="242" width="142" height="19"/>
-                                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Aucune Sélection" id="kZu-TW-1ma">
-                                                    <font key="font" metaFont="systemBold" size="16"/>
-                                                    <color key="textColor" red="0.39251893939393945" green="0.39251893939393945" blue="0.39251893939393945" alpha="0.84999999999999998" colorSpace="calibratedRGB"/>
-                                                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                                </textFieldCell>
-                                            </textField>
-                                        </subviews>
-                                        <constraints>
-                                            <constraint firstAttribute="centerY" secondItem="HPC-bX-tgo" secondAttribute="centerY" id="RdV-8p-Ylh"/>
-                                            <constraint firstAttribute="centerX" secondItem="HPC-bX-tgo" secondAttribute="centerX" id="q0L-O4-dZy"/>
-                                        </constraints>
                                     </customView>
+                                    <imageView horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" id="o9h-ct-Px9">
+                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                        <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" id="frQ-zL-Tqv"/>
+                                    </imageView>
                                 </subviews>
                                 <holdingPriorities>
+                                    <real value="250"/>
                                     <real value="250"/>
                                     <real value="250"/>
                                 </holdingPriorities>
@@ -872,6 +863,7 @@
                         </constraints>
                     </view>
                     <connections>
+                        <outlet property="contentView" destination="Vha-je-HBc" id="qQk-ze-ElW"/>
                         <outlet property="outlineView" destination="e3U-KV-IQX" id="i7Q-by-mfq"/>
                         <segue destination="saB-Kb-Iel" kind="sheet" identifier="loginSegue" id="f8s-OU-5jy"/>
                     </connections>
@@ -1121,6 +1113,18 @@ DQ
                 <customObject id="Mf0-QN-Tgm" userLabel="First Responder" customClass="NSResponder" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="-574.5" y="602"/>
+        </scene>
+        <!--Page Controller-->
+        <scene sceneID="mjj-Mf-4Qe">
+            <objects>
+                <pagecontroller id="eqF-wb-W42" sceneMemberID="viewController">
+                    <view key="view" id="lYX-Pf-EYJ">
+                        <rect key="frame" x="0.0" y="0.0" width="450" height="300"/>
+                        <autoresizingMask key="autoresizingMask"/>
+                    </view>
+                </pagecontroller>
+                <customObject id="aSm-gg-QK9" userLabel="First Responder" customClass="NSResponder" sceneMemberID="firstResponder"/>
+            </objects>
         </scene>
     </scenes>
     <resources>

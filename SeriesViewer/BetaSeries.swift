@@ -29,7 +29,7 @@ class BetaSeries {
     }
     
     func registerWithUsername(username: String, password: String, email:String) -> [AnyObject]? {
-        // TODO: - coder cette méthode
+        // TODO: coder cette méthode
         return nil
     }
     
@@ -48,11 +48,10 @@ class BetaSeries {
         request.options["password"] = passwordMD5
         
         request.send(completionHandler:{ root in
-            if let member = root.objectForKey("member") as? [String: String] {
-                if let token = member["token"] {
-                    NSNotificationCenter.defaultCenter().postNotificationName("recuperationToken", object: self, userInfo:["token" : token])
-                    NSLog("token : \(token)")
-                }
+            
+            if let token = root["member"]["token"].stringValue {
+                NSNotificationCenter.defaultCenter().postNotificationName("recuperationToken", object: self, userInfo:["token" : token])
+                NSLog("token : \(token)")
             }
         }, handleError: { error in
             NSLog("errorToken")
@@ -76,11 +75,15 @@ class BetaSeries {
         request.send(completionHandler: { root in
             
             var noms = [String]()
-            if let shows = root.objectForKey("shows") as? NSDictionary {
+            
+            
+            // TODO: revoir si ça marche
+            
+            
+            if let shows = root["shows"].dictionaryValue {
                 for i in 0..<(shows.count > 5 ? 5 : shows.count) {
                     
-                    if let show = shows["\(i)"] as? [String: AnyObject] {
-                        let nom = show["title"] as String
+                    if let nom = shows["\(i)"]?["title"].stringValue {
                         noms.append(nom)
                     }
                 }
@@ -95,42 +98,56 @@ class BetaSeries {
         request.token = self.token
         request.category = BSRequestCategory.Members
         request.method = BSRequestMethod.Infos
+        request.options["summary"] = "true"
         
         request.send(completionHandler: { root in
             
             var series = [Serie]()
             var memb: Member?
-            if let member = root.objectForKey("member") as? NSDictionary {
-                if let shows = member.objectForKey("shows") as? NSDictionary {
-                    for show in shows.allValues {
-                        let title = show["title"] as String
-                        let object: AnyObject = show["archive"] ?? "0"
-                        let active =  object as NSString  == "0"
-                        let url = show["url"] as String
-                        series.append(Serie(nom: title, active: active, url: url))
-                    }
+            
+            let member = root["member"]
+            if let shows = member["shows"].dictionaryValue {
+                for (_, show) in shows {
+                    let title = show["title"].stringValue!
+                    let object = show["archive"].integerValue!
+                    let active =  object == 0
+                    let url = show["url"].stringValue!
+                    series.append(Serie(nom: title, active: active, url: url))
                 }
-                let login = member.objectForKey("login") as String
-                let avatarUrl = member.objectForKey("avatar") as String
-                var badges = 0
-                var episodes = 0
-                var progress: Float = 0.0
-                var seasons = 0
-                var shows = 0
-                if let stats = member.objectForKey("stats") as? NSDictionary {
-                    badges = (stats.objectForKey("badges") as NSNumber).integerValue
-                    episodes = (stats.objectForKey("episodes") as NSNumber).integerValue
-                    //progress = (stats.objectForKey("progress") as NSNumber).floatValue
-                    seasons = (stats.objectForKey("seasons") as NSNumber).integerValue
-                    shows = (stats.objectForKey("shows") as NSNumber).integerValue
-
-                }
-                memb = Member(login: login, nbBadges: badges, nbEpisodes: episodes, progress: progress, seasons: seasons, nbShows: shows)
-                
             }
+            
+            let login = member["login"].stringValue!
+            let avatarUrl = member["avatar"].stringValue!
+            var badges = member["stats"]["badges"].integerValue ?? 0
+            var episodes = member["stats"]["episodes"].integerValue ?? 0
+            var progress: Float = member["stats"]["progress"].floatValue ?? 0.0
+            var seasons = member["stats"]["seasons"].integerValue ?? 0
+            var shows = member["stats"]["shows"].integerValue ?? 0
+
+            memb = Member(login: login, nbBadges: badges, nbEpisodes: episodes, progress: progress, seasons: seasons, nbShows: shows)
+            // TODO: envoyer membre
             let userInfo : [String: NSObject] = ["series" : series]
             NSNotificationCenter.defaultCenter().postNotificationName("resultatMembre", object: self, userInfo:userInfo)
 
+        }, handleError:self.didFail)
+    }
+    
+    func recupSerie(var serie: Serie) {
+        var request = BSRequest()
+        request.apiKey = self.apiKey
+        request.category = BSRequestCategory.Shows
+        request.method = BSRequestMethod.Display
+        request.object = serie.url
+        
+        request.send(completionHandler: { root in
+         // TODO récupérer la série
+            let show = root["show"]
+            serie.url_banner = show["banner"].stringValue!
+            serie.descriptionSerie = show["description"].stringValue!
+            serie.dureeEpisode = show["duration"].integerValue!
+            serie.genres = show["genres"].dictionaryValue!.values.array.map{ return $0.stringValue! }
+            serie.id_thetvdb = show["id_thetvdb"].integerValue!
+            serie.status = StatutSeries(rawValue: show["status"].stringValue!)!
         }, handleError:self.didFail)
     }
     
@@ -143,7 +160,7 @@ class BetaSeries {
         request.method = BSRequestMethod.IsActive
         request.send(completionHandler: { root in
                                     
-            if let token = root.objectForKey("token") as? String {
+            if let token = root["token"].stringValue {
                 let valeur = "\(token == self.token)"
                 NSNotificationCenter.defaultCenter().postNotificationName("tokenActive", object: self, userInfo:["tokenValable" : valeur])
                 NSLog("token valide : \(valeur)")
@@ -163,58 +180,4 @@ class BetaSeries {
     func didFail(error: NSError) {
         NSLog("erreur : \(error)")
     }
-    
-//    func request(request: BSRequest, didReceivedDatas datas:NSDictionary) {
-//        NSLog("infos recue : \(datas)")
-//        
-//        let root = datas.objectForKey("root") as NSDictionary
-//        switch (request.category, request.method) {
-//            
-//            case (BSRequestCategory.Members, BSRequestMethod.Auth):
-//                if let member = root.objectForKey("member") as? [String: String] {
-//                    if let token = member["token"] {
-//                        NSNotificationCenter.defaultCenter().postNotificationName("recuperationToken", object: self, userInfo:["token" : token])
-//                        NSLog("token : \(token)")
-//                    }
-//                }
-//                
-//            case (BSRequestCategory.Members, BSRequestMethod.IsActive):
-//                if let token = root.objectForKey("token") as? String {
-//                    let valeur = "\(token == self.token)"
-//                    NSNotificationCenter.defaultCenter().postNotificationName("tokenActive", object: self, userInfo:["tokenValable" : valeur])
-//                    NSLog("token valide : \(valeur)")
-//                }
-//                
-//            case (BSRequestCategory.Shows, BSRequestMethod.Search):
-//                var noms = [String]()
-//                if let shows = root.objectForKey("shows") as? NSDictionary {
-//                    for i in 0..<(shows.count > 5 ? 5 : shows.count) {
-//                        
-//                        if let show = shows["\(i)"] as? [String: AnyObject] {
-//                            let nom = show["title"] as String
-//                            noms.append(nom)
-//                        }
-//                    }
-//                }
-//                NSNotificationCenter.defaultCenter().postNotificationName("resultatRecherche", object: self, userInfo:["mots" : noms])
-//            
-//            case (BSRequestCategory.Members, BSRequestMethod.Infos):
-//                var noms = [String]()
-//                if let member = root.objectForKey("member") as? NSDictionary {
-//                    if let shows = member.objectForKey("shows") as? NSDictionary {
-//                        for show in shows.allValues {
-//                            noms.append(show["title"] as String)
-//                        }
-//                    }
-//                }
-//                NSNotificationCenter.defaultCenter().postNotificationName("resultatMembre", object: self, userInfo:["nomSeries" : noms])
-//            
-//            
-//            case (_, _):
-//                NSLog("rien a faire")
-//        }
-//    }
-
-    
-    
 }

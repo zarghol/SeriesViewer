@@ -12,7 +12,9 @@ import AppKit
 
 class MenuSeriesController: NSViewController, NSOutlineViewDataSource, NSOutlineViewDelegate {
     
+    @IBOutlet weak var contentView: NSView!
     @IBOutlet weak var outlineView: NSOutlineView!
+    var contentController : NSViewController?
     var series: [HeaderItem] = [HeaderItem(nom: "Séries Actives"), HeaderItem(nom: "Séries Archivées")]
 
     override func viewDidLoad() {
@@ -23,9 +25,11 @@ class MenuSeriesController: NSViewController, NSOutlineViewDataSource, NSOutline
         let serie2 = Serie(nom: "Série 2", active: false, url: "")
 
         self.recupereSeries([serie1, serie2])
-        
+        self.changeContentViewWithSelection(0)
         NSNotificationCenter.defaultCenter().addObserver(self, selector:"recupereSeries:", name:"recuperationSeries", object:nil)
         NSNotificationCenter.defaultCenter().addObserver(self, selector:"afficheDemandeMembre", name:"afficheDemandeMembre", object:nil)
+        NSNotificationCenter.defaultCenter().addObserver(self, selector:"seriesCompletes", name:"rechargeAffichage", object:nil)
+
     }
     
     override func viewDidAppear() {
@@ -82,6 +86,43 @@ class MenuSeriesController: NSViewController, NSOutlineViewDataSource, NSOutline
         return view
     }
     
+    func outlineViewSelectionDidChange(notification: NSNotification) {
+        if self.outlineView.selectedRow != -1 {
+            self.changeContentViewWithSelection(self.outlineView.selectedRow)
+        }
+    }
+    
+    func changeContentViewWithSelection(selectedIndex: Int) {
+        let item = self.outlineView.itemAtRow(selectedIndex) as MenuItem
+        self.contentController?.view.removeFromSuperview()
+        println("selectedIndex : \(selectedIndex)")
+        switch item {
+            case is Serie:
+                var viewController = SerieContentViewController()
+                viewController?.serie = item as Serie
+                self.contentController = viewController
+                
+            default:
+                self.contentController = DefaultContentViewController()
+        }
+        
+        var frame = self.contentView.bounds
+        frame.origin.y -= 65.0
+        self.contentController!.view.frame = frame
+        self.contentController?.view.autoresizingMask = NSAutoresizingMaskOptions.ViewHeightSizable | NSAutoresizingMaskOptions.ViewWidthSizable
+        
+        println("outline : \nbounds : \(self.outlineView.bounds)\nframe : \(self.outlineView.frame)\n")
+        println("contentView : \nbounds : \(self.contentView.bounds)\nframe : \(self.contentView.frame)\n")
+        
+        self.contentView.addSubview(self.contentController!.view)
+    }
+    
+    func rechargeAffichage() {
+        dispatch_async(dispatch_get_main_queue()) {
+            self.outlineView.reloadData()
+        }
+    }
+    
     func recupereSeries(notification: NSNotification) {
         if let series = notification.userInfo?["series"] as? [Serie] {
             self.recupereSeries(series)
@@ -94,7 +135,7 @@ class MenuSeriesController: NSViewController, NSOutlineViewDataSource, NSOutline
         for serie in series {
             dispatch_async(dispatch_get_main_queue()) {
                 self.series[serie.active == true ? 0 : 1].ajouterSerie(serie)
-                self.outlineView?.reloadData()
+                self.outlineView.reloadData()
             }
         }
     }

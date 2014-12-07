@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="6254" systemVersion="14B25" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
+    <dependencies>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="6254"/>
+    </dependencies>
+    <objects>
+        <customObject id="-2" userLabel="File's Owner" customClass="DefaultContentViewController" customModule="SeriesViewer" customModuleProvider="target">
+            <connections>
+                <outlet property="view" destination="c22-O7-iKe" id="awi-2z-b4e"/>
+            </connections>
+        </customObject>
+        <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
+        <customObject id="-3" userLabel="Application" customClass="NSObject"/>
+        <customView id="c22-O7-iKe">
+            <rect key="frame" x="0.0" y="0.0" width="480" height="272"/>
+            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+            <subviews>
+                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="74F-xQ-NT4">
+                    <rect key="frame" x="155" y="124" width="171" height="25"/>
+                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Aucune Sélection" id="fzN-g3-ULR">
+                        <font key="font" size="20" name="HelveticaNeue-Bold"/>
+                        <color key="textColor" red="0.31565656565656564" green="0.31565656565656564" blue="0.31565656565656564" alpha="1" colorSpace="calibratedRGB"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+            </subviews>
+            <constraints>
+                <constraint firstAttribute="centerY" secondItem="74F-xQ-NT4" secondAttribute="centerY" id="AFc-Fg-pzi"/>
+                <constraint firstAttribute="centerX" secondItem="74F-xQ-NT4" secondAttribute="centerX" id="dV7-pQ-Feu"/>
+            </constraints>
+        </customView>
+    </objects>
+</document>

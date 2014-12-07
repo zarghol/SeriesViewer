@@ -37,6 +37,8 @@ class AccesBetaSerie : NSObject{
         }
     }
     
+    var seriesComplete:Int = 0
+    
     override init() {
         
         self.betaSerie = BetaSeries(apiKey: cleAPI)
@@ -45,9 +47,10 @@ class AccesBetaSerie : NSObject{
         
         self.betaSerie.token = self.token ?? ""
         
-        NSNotificationCenter.defaultCenter().addObserver(self, selector:"recuperationToken:", name:"recuperationToken", object:nil)
-        NSNotificationCenter.defaultCenter().addObserver(self, selector:"finVerificationToken:", name:"tokenActive", object:nil)
-        NSNotificationCenter.defaultCenter().addObserver(self, selector:"finRecupereSeries:", name:"resultatMembre", object:nil)
+        NSNotificationCenter.defaultCenter().addObserver(self, selector: "recuperationToken:", name: "recuperationToken", object: nil)
+        NSNotificationCenter.defaultCenter().addObserver(self, selector: "finVerificationToken:", name: "tokenActive", object: nil)
+        NSNotificationCenter.defaultCenter().addObserver(self, selector: "finRecupereSeries:", name: "resultatMembre", object: nil)
+        NSNotificationCenter.defaultCenter().addObserver(self, selector: "finRecupereSerie", name: "serieComplete", object: nil)
 
     }
     
@@ -95,17 +98,36 @@ class AccesBetaSerie : NSObject{
         self.betaSerie.recupSeries()
     }
     
+    
+    func recupereSerieEntiere(serie: Serie) {
+        self.betaSerie.recupSerie(serie)
+    }
+    
     func finRecupereSeries(notification: NSNotification) {
         if let member = notification.userInfo?["member"] as? Member {
+            println("member stocke !")
             self.member = member
         }
         
         if let series = notification.userInfo?["series"] as? [Serie] {
+            self.seriesComplete = series.count
+            series.map {
+                self.recupereSerieEntiere($0)
+            }
             NSNotificationCenter.defaultCenter().postNotificationName("recuperationSeries", object: self, userInfo:["series" : series])
+        }
+    }
+    
+    func finRecupereSerie() {
+        if --self.seriesComplete <= 0 {
+            // envoi notification signalement mise a jour series
+            NSNotificationCenter.defaultCenter().postNotificationName("seriesCompletes", object: self)
         }
     }
     
     func chercheSerie(nom: String) {
         self.betaSerie.searchShow(nom)
     }
+    
+
 }
