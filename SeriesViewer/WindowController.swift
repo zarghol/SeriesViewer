@@ -9,7 +9,7 @@
 import Cocoa
 import AppKit
 
-class WindowController: NSWindowController, NSToolbarDelegate {
+class WindowController: NSWindowController, NSToolbarDelegate, NSSplitViewDelegate {
 
     override func windowDidLoad() {
         super.windowDidLoad()
@@ -17,6 +17,5 @@ class WindowController: NSWindowController, NSToolbarDelegate {
 
         // Implement this method to handle any initialization after your window controller's window has been loaded from its nib file.
     }
-    
 
 }

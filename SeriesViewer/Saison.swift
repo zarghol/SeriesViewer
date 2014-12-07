@@ -29,10 +29,15 @@ class Saison : MenuItem {
     }
     
     func creerEpisode(nom: String, description: String) {
-        let episode = Episode(nom: nom, numEpisode: self.items.count+1, description: description)
+        self.creerEpisode(nom, description: description, numEpisode: self.items.count+1)
+    }
+    
+    func creerEpisode(nom: String, description: String, numEpisode: Int) {
+        let episode = Episode(nom: nom, numEpisode: numEpisode, description: description)
         self.items.append(episode)
     }
 }
+
 
 func ==(s1: Saison, s2: Saison) -> Bool {
     return s1.numeroSaison == s2.numeroSaison && s1.nomItem == s2.nomItem

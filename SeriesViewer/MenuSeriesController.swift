@@ -10,7 +10,7 @@ import Cocoa
 import AppKit
 
 
-class MenuSeriesController: NSViewController, NSOutlineViewDataSource, NSOutlineViewDelegate {
+class MenuSeriesController: NSViewController, NSOutlineViewDataSource, NSOutlineViewDelegate, NSSplitViewDelegate {
     
     @IBOutlet weak var contentView: NSView!
     @IBOutlet weak var outlineView: NSOutlineView!
@@ -20,8 +20,9 @@ class MenuSeriesController: NSViewController, NSOutlineViewDataSource, NSOutline
     override func viewDidLoad() {
         super.viewDidLoad()
         let serie1 = Serie(nom: "Série Test", active: true, url: "")
-        serie1.creerSaison(1)
+        //serie1.creerSaison(1)
         serie1.ajouterEpisode("Il était une fois..", description: "", aSaison: 1)
+        
         let serie2 = Serie(nom: "Série 2", active: false, url: "")
 
         self.recupereSeries([serie1, serie2])
@@ -33,8 +34,9 @@ class MenuSeriesController: NSViewController, NSOutlineViewDataSource, NSOutline
     }
     
     override func viewDidAppear() {
-        NSLog("verif Token")
-        AccesBetaSerie.acces.verifieToken()
+        Async.background {
+            AccesBetaSerie.acces.verifieToken()
+        }
     }
     
     func outlineView(outlineView: NSOutlineView, child index: Int, ofItem item: AnyObject?) -> AnyObject {
@@ -118,8 +120,10 @@ class MenuSeriesController: NSViewController, NSOutlineViewDataSource, NSOutline
     }
     
     func rechargeAffichage() {
-        dispatch_async(dispatch_get_main_queue()) {
+        Async.main {
             self.outlineView.reloadData()
+            self.outlineView.sizeLastColumnToFit()
+            self.outlineView.floatsGroupRows = false
         }
     }
     
@@ -133,7 +137,7 @@ class MenuSeriesController: NSViewController, NSOutlineViewDataSource, NSOutline
         self.series[0].viderSeries()
         self.series[1].viderSeries()
         for serie in series {
-            dispatch_async(dispatch_get_main_queue()) {
+            Async.main {
                 self.series[serie.active == true ? 0 : 1].ajouterSerie(serie)
                 self.outlineView.reloadData()
             }
@@ -144,4 +148,9 @@ class MenuSeriesController: NSViewController, NSOutlineViewDataSource, NSOutline
         NSLog("afficheDemande")
         self.performSegueWithIdentifier("loginSegue", sender: self)
     }
+    
+    func splitView(splitView: NSSplitView, canCollapseSubview subview: NSView) -> Bool {
+        return false
+    }
+
 }

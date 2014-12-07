@@ -9,12 +9,13 @@
 import Foundation
 
 class Episode : MenuItem {
-    let descr: String
     let numEpisode: Int
+//    let nomEpisode: String -> nomItem
+    let descriptionEpisode: String
     // let lien
     
     init(nom: String, numEpisode: Int, description: String = "") {
-        self.descr = description
+        self.descriptionEpisode = description
         self.numEpisode = numEpisode
         super.init(nom: nom, items: [Episode]())
     }

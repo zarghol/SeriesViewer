@@ -99,18 +99,22 @@ class BSRequest {
         
         let task = self.session.dataTaskWithRequest(self.request) { data, response, error in
             if let err = error {
+                NSLog("erreur base")
                 //self.delegate.request(self, didFailWithError: err)
                 handleError(err)
             } else {
                 var error: NSError?
                 
                 let response = JSON(data: data, error: &error)
-                
-                let responseAffiche = NSJSONSerialization.JSONObjectWithData(data, options:.AllowFragments, error: &error) as NSDictionary
+                NSLog("url : \(self.urlStringForRequest())")
+
+                //let responseAffiche = NSJSONSerialization.JSONObjectWithData(data, options:.AllowFragments, error: &error) as NSDictionary
                 if let err = error {
+                    NSLog("url : \(self.urlStringForRequest())")
+                    NSLog("erreur json\ndata :\n\(data)")
                     handleError(err)
                 } else {
-                    //NSLog("infos recue : \(responseAffiche)")
+                   //NSLog("infos recue : \(responseAffiche)")
 
                     let root = response["root"]
                     var error2: NSError?

@@ -18,6 +18,8 @@ class Serie : MenuItem {
     var active: Bool
     var url: String
     
+    var id: Int
+    
     var url_banner: String?
     var descriptionSerie: String
     var dureeEpisode: Int // en Minutes
@@ -38,6 +40,7 @@ class Serie : MenuItem {
         self.dureeEpisode = 0
         self.genres = [String]()
         self.id_thetvdb = -1
+        self.id = -1
         self.status = .Autre
         
         
@@ -56,9 +59,41 @@ class Serie : MenuItem {
         }
     }
     
-     func ajouterEpisode(nomEpisode: String, description: String, aSaison numSaison:Int) {
-        var saison = self.items.filter {return ($0 as Saison).numeroSaison == numSaison }[0] as Saison
+    func ajouterEpisode(nomEpisode: String, description: String, numEpisode:Int, aSaison numSaison:Int) {
+        let array = self.items.filter { return ($0 as Saison).numeroSaison == numSaison }
+        var saison : Saison
+        if array.count > 0 {
+            saison = array[0] as Saison
+        } else {
+            saison = Saison(numero: numSaison)
+            self.ajouteSaison(saison)
+            
+        }
 
+        saison.creerEpisode(nomEpisode, description: description, numEpisode: numEpisode)
+    }
+    
+    func ajouterEpisode(nomEpisode: String, description: String, aSaison numSaison:Int) {
+        let array = self.items.filter { return ($0 as Saison).numeroSaison == numSaison }
+        var saison : Saison
+        if array.count > 0 {
+            saison = array[0] as Saison
+        } else {
+            saison = Saison(numero: numSaison)
+            self.ajouteSaison(saison)
+            
+        }
+        
         saison.creerEpisode(nomEpisode, description: description)
+    }
+    
+    func trieSaison() {
+        self.items.sort{
+            return ($0 as Saison).numeroSaison < ($1 as Saison).numeroSaison
+        }
+        
+        for item in self.items {
+            item.items.sort{ return ($0 as Episode).numEpisode < ($1 as Episode).numEpisode }
+        }
     }
 }

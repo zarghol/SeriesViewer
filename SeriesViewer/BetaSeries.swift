@@ -135,12 +135,12 @@ class BetaSeries {
     func recupSerie(var serie: Serie) {
         var request = BSRequest()
         request.apiKey = self.apiKey
+        request.token = self.token
         request.category = BSRequestCategory.Shows
         request.method = BSRequestMethod.Display
         request.object = serie.url
         
         request.send(completionHandler: { root in
-         // TODO récupérer la série
             let show = root["show"]
             serie.url_banner = show["banner"].stringValue!
             serie.descriptionSerie = show["description"].stringValue!
@@ -148,7 +148,56 @@ class BetaSeries {
             serie.genres = show["genres"].dictionaryValue!.values.array.map{ return $0.stringValue! }
             serie.id_thetvdb = show["id_thetvdb"].integerValue!
             serie.status = StatutSeries(rawValue: show["status"].stringValue!)!
+            let nbSaison = show["seasons"].dictionaryValue!.count
+            for i in 0..<nbSaison {
+                serie.creerSaison(i+1)
+            }
+            if serie.nomItem == "The Big Bang Theory" {
+                NSLog("\(serie.id_thetvdb)")
+            }
+            
+            Async.background {
+                self.recupEpisodes(serie)
+            }
         }, handleError:self.didFail)
+    }
+    
+    func recupEpisodes(var serie: Serie) {
+        var request = BSRequest()
+        request.apiKey = self.apiKey
+        request.token = self.token
+        request.category = BSRequestCategory.Shows
+        request.method = BSRequestMethod.Episodes
+        request.object = serie.url
+
+        //request.options["thetvdb_id"] = "\(serie.id_thetvdb)"
+        
+        request.send(completionHandler: { root in
+            
+            let saisonsJSON = root["seasons"].dictionaryValue!
+
+            let saisons = saisonsJSON.values.array
+            for saison in saisons {
+                let episodes = saison["episodes"].dictionaryValue!.values.array
+                
+                for episode in episodes {
+                    let nom = episode["title"].stringValue!
+                    let description = episode["description"].stringValue!
+                    let number : String = episode["number"].stringValue!
+                    let numSaison = number.substringFromIndex(number.startIndex.successor()).substringToIndex(number.startIndex.successor().successor().successor()).intValue
+                    let numEpisode = number.substringFromIndex(number.endIndex.predecessor().predecessor()).intValue
+                    
+                    serie.ajouterEpisode(nom, description: description, numEpisode: numEpisode, aSaison: numSaison)
+                }
+            }
+            serie.trieSaison()
+            NSNotificationCenter.defaultCenter().postNotificationName("seriesCompletes", object: self)
+            //println(root)
+            }, handleError:{
+                NSLog("erreur de recupEpisode pour : \(serie.nomItem)")
+                self.didFail($0)
+            })
+
     }
     
     
