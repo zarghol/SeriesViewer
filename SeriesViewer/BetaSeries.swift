@@ -12,13 +12,11 @@ class BetaSeries {
     var apiKey: String
     var token: String
     
-    let userAgent: String
     let timeout: NSTimeInterval
     
     init() {
         self.apiKey = ""
         self.token = ""
-        self.userAgent = betaseries_user_agent
         self.timeout = 20
     }
     
@@ -98,66 +96,77 @@ class BetaSeries {
         request.token = self.token
         request.category = BSRequestCategory.Members
         request.method = BSRequestMethod.Infos
-        request.options["summary"] = "true"
         
         request.send(completionHandler: { root in
-            
-            var series = [Serie]()
-            var memb: Member?
-            
             let member = root["member"]
-            if let shows = member["shows"].dictionaryValue {
-                for (_, show) in shows {
-                    let title = show["title"].stringValue!
-                    let object = show["archive"].integerValue!
-                    let active =  object == 0
-                    let url = show["url"].stringValue!
-                    series.append(Serie(nom: title, active: active, url: url))
-                }
-            }
+            
+            let series: [Serie] = member["shows"].arrayValue!.map { return self.fillSerie($0) }
+
+            
             
             let login = member["login"].stringValue!
-            let avatarUrl = member["avatar"].stringValue!
+            let avatarUrl = member["avatar"].stringValue ?? ""
             var badges = member["stats"]["badges"].integerValue ?? 0
             var episodes = member["stats"]["episodes"].integerValue ?? 0
             var progress: Float = member["stats"]["progress"].floatValue ?? 0.0
             var seasons = member["stats"]["seasons"].integerValue ?? 0
-            var shows = member["stats"]["shows"].integerValue ?? 0
+            var showsStats = member["stats"]["shows"].integerValue ?? 0
 
-            memb = Member(login: login, nbBadges: badges, nbEpisodes: episodes, progress: progress, seasons: seasons, nbShows: shows)
+            var memb = Member(login: login, nbBadges: badges, nbEpisodes: episodes, progress: progress, seasons: seasons, nbShows: showsStats)
             // TODO: envoyer membre
-            let userInfo : [String: NSObject] = ["series" : series]
+            let userInfo : [String: NSObject] = ["series" : series, "member" : memb]
             NSNotificationCenter.defaultCenter().postNotificationName("resultatMembre", object: self, userInfo:userInfo)
 
         }, handleError:self.didFail)
     }
     
-    func recupSerie(var serie: Serie) {
+    private func fillSerie(show:JSON) -> Serie {
+        let title = show["title"].stringValue!
+        let active = !show["user"]["archived"].boolValue
+        let url = show["resource_url"].stringValue!
+        
+        var serie = Serie(nom: title, active: active, url: url)
+        
+        serie.id = show["id"].integerValue!
+        serie.id_thetvdb = show["thetvdb_id"].integerValue!
+        serie.descriptionSerie = show["description"].stringValue!
+        serie.anneeCreation = show["creation"].integerValue!
+        serie.genres = show["genres"].arrayValue!.map{ return $0.stringValue! }
+        serie.status = StatutSeries(rawValue: show["status"].stringValue!)!
+        serie.dureeEpisode = show["length"].integerValue!
+        
+        let nbSaison = show["seasons"].integerValue!
+        for i in 1...nbSaison {
+            serie.creerSaison(i)
+        }
+        
+        Async.background {
+            self.recupBanner(serie)
+            self.recupEpisodes(serie)
+        }
+        
+        
+        return serie
+    }
+    
+    func recupBanner(var serie: Serie) {
         var request = BSRequest()
         request.apiKey = self.apiKey
         request.token = self.token
         request.category = BSRequestCategory.Shows
-        request.method = BSRequestMethod.Display
-        request.object = serie.url
+        request.method = BSRequestMethod.Pictures
+        request.options["id"] = "\(serie.id)"
         
         request.send(completionHandler: { root in
-            let show = root["show"]
-            serie.url_banner = show["banner"].stringValue!
-            serie.descriptionSerie = show["description"].stringValue!
-            serie.dureeEpisode = show["duration"].integerValue!
-            serie.genres = show["genres"].dictionaryValue!.values.array.map{ return $0.stringValue! }
-            serie.id_thetvdb = show["id_thetvdb"].integerValue!
-            serie.status = StatutSeries(rawValue: show["status"].stringValue!)!
-            let nbSaison = show["seasons"].dictionaryValue!.count
-            for i in 0..<nbSaison {
-                serie.creerSaison(i+1)
-            }
-            if serie.nomItem == "The Big Bang Theory" {
-                NSLog("\(serie.id_thetvdb)")
-            }
+            let pictures = root["pictures"].arrayValue!
             
-            Async.background {
-                self.recupEpisodes(serie)
+            for pic in pictures {
+                if pic["picked"].stringValue! == "banner" {
+                    let url = pic["url"].stringValue!
+                    serie.banner = url
+                    NSNotificationCenter.defaultCenter().postNotificationName("banniereRecupere", object: self)
+                    return
+                }
             }
         }, handleError:self.didFail)
     }
@@ -168,36 +177,29 @@ class BetaSeries {
         request.token = self.token
         request.category = BSRequestCategory.Shows
         request.method = BSRequestMethod.Episodes
-        request.object = serie.url
-
-        //request.options["thetvdb_id"] = "\(serie.id_thetvdb)"
+        request.options["id"] = "\(serie.id)"
         
         request.send(completionHandler: { root in
             
-            let saisonsJSON = root["seasons"].dictionaryValue!
-
-            let saisons = saisonsJSON.values.array
-            for saison in saisons {
-                let episodes = saison["episodes"].dictionaryValue!.values.array
+            for ep in root["episodes"].arrayValue! {
+                let nom = ep["title"].stringValue!
+                let description = ep["description"].stringValue!
+                let numEpisode = ep["episode"].integerValue!
+                let numSaison = ep["season"].integerValue!
+                let id = ep["id"].integerValue!
+                let watched = ep["user"]["seen"].boolValue
                 
-                for episode in episodes {
-                    let nom = episode["title"].stringValue!
-                    let description = episode["description"].stringValue!
-                    let number : String = episode["number"].stringValue!
-                    let numSaison = number.substringFromIndex(number.startIndex.successor()).substringToIndex(number.startIndex.successor().successor().successor()).intValue
-                    let numEpisode = number.substringFromIndex(number.endIndex.predecessor().predecessor()).intValue
-                    
-                    serie.ajouterEpisode(nom, description: description, numEpisode: numEpisode, aSaison: numSaison)
-                }
+                var episode = Episode(nom: nom, numEpisode: numEpisode, id: id, vue: watched, description: description)
+                
+                serie.ajouterEpisode(episode, aSaison: numSaison)
             }
-            serie.trieSaison()
+            
+            serie.trie()
             NSNotificationCenter.defaultCenter().postNotificationName("seriesCompletes", object: self)
-            //println(root)
             }, handleError:{
                 NSLog("erreur de recupEpisode pour : \(serie.nomItem)")
                 self.didFail($0)
             })
-
     }
     
     
@@ -208,13 +210,12 @@ class BetaSeries {
         request.category = BSRequestCategory.Members
         request.method = BSRequestMethod.IsActive
         request.send(completionHandler: { root in
-                                    
-            if let token = root["token"].stringValue {
-                let valeur = "\(token == self.token)"
-                NSNotificationCenter.defaultCenter().postNotificationName("tokenActive", object: self, userInfo:["tokenValable" : valeur])
-                NSLog("token valide : \(valeur)")
-            }
-        }, handleError: self.didFail)
+            NSNotificationCenter.defaultCenter().postNotificationName("tokenActive", object: self)
+            NSLog("token valide")
+            }, handleError: { error in
+                self.didFail(error)
+                NSNotificationCenter.defaultCenter().postNotificationName("afficheDemandeMembre", object: self)
+        })
     }
     
     func destroyToken() {
@@ -223,6 +224,17 @@ class BetaSeries {
         request.token = self.token
         request.category = BSRequestCategory.Members
         request.method = BSRequestMethod.Destroy
+        request.send(completionHandler: {_ in }, handleError: self.didFail)
+    }
+    
+    func markAsWatched(episode: Episode) {
+        var request = BSRequest()
+        request.apiKey = self.apiKey
+        request.token = self.token
+        request.category = BSRequestCategory.Episodes
+        request.method = BSRequestMethod.Watched
+        request.options["id"] = "\(episode.id)"
+        
         request.send(completionHandler: {_ in }, handleError: self.didFail)
     }
     

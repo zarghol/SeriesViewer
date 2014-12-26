@@ -165,18 +165,23 @@ extension JSON: BooleanType {
     
     public var boolValue: Bool {
         switch self {
-        case .ScalarNumber(let number):
-            return number.boolValue
-        case .ScalarString(let string):
-            return (string as NSString).boolValue
-        case .Sequence(let array):
-            return array.count > 0
-        case .Mapping(let dictionary):
-            return dictionary.count > 0
-        case .Null:
-            return false
-        default:
-            return true
+            case .ScalarNumber(let number):
+                return number.boolValue
+            
+            case .ScalarString(let string):
+                return (string as NSString).boolValue
+            
+            case .Sequence(let array):
+                return array.count > 0
+            
+            case .Mapping(let dictionary):
+                return dictionary.count > 0
+            
+            case .Null:
+                return false
+            
+            default:
+                return true
         }
     }
 }

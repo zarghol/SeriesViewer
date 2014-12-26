@@ -8,7 +8,7 @@
 
 import Foundation
 
-let betaseries_api_url = "http://api.betaseries.com/"
+let betaseries_api_url = "https://api.betaseries.com/"
 let betaseries_user_agent = "Swift BetaSeries Library - ClemNonn (1.0)"
 
 enum BSRequestCategory: String{
@@ -16,8 +16,11 @@ enum BSRequestCategory: String{
     case Members = "members"
     case Planning = "planning"
     case Shows = "shows"
+    case Episodes = "episodes"
     case Subtitles = "subtitles"
     case Timeline = "timeline"
+    // FIXME pas encore fonctionnel
+    case Pictures = "pictures"
 }
 
 enum BSRequestMethod : String {
@@ -44,10 +47,19 @@ enum BSRequestMethod : String {
     case PostShow = "post/show"
     case Recommend = "recommend"
     case Remove = "remove"
+    case Scraper = "scraper"
     case Search = "search"
     case Show = "show"
     case SignUp = "signup"
     case Watched = "watched"
+    case Pictures = "pictures"
+}
+
+enum HttpMethod: String {
+    case Get = "GET"
+    case Put = "PUT"
+    case Post = "POST"
+    case Delete = "DELETE"
 }
 
 typealias BSRequestObject = String
@@ -55,23 +67,21 @@ typealias BSRequestOptions = [String: String]
 
 class BSRequest {
     private var session: NSURLSession
-    private var request: NSMutableURLRequest
+    //private var request: NSMutableURLRequest
     
     var apiKey: String
     var token: String
     
-    let userAgent: String
+    private let userAgent: String
     let timeout: NSTimeInterval
     
     var category: BSRequestCategory
     var method: BSRequestMethod
     var object: BSRequestObject?
     var options: BSRequestOptions
-    var urlSupp: String?
+    var httpMethod : HttpMethod
     
-    //var delegate: BSRequestDelegate
-    
-    init(/*delegate: BSRequestDelegate*/) {
+    init() {
         self.apiKey = ""
         self.token = ""
         
@@ -80,24 +90,27 @@ class BSRequest {
 
         self.category = BSRequestCategory.Timeline
         self.method = BSRequestMethod.Home
+        self.httpMethod = .Get
         self.object = nil
         self.options = [String: String]()
 
         //self.delegate = delegate
         
         
-        self.request = NSMutableURLRequest()
+        //self.request = NSMutableURLRequest()
         let conf = NSURLSessionConfiguration.defaultSessionConfiguration()
         self.session = NSURLSession(configuration:conf)
     }
     
     func send(#completionHandler:(JSON) -> (), handleError:(NSError) -> ()) {
-        self.request.URL = NSURL(string: self.urlStringForRequest())
-
-        self.request.timeoutInterval = self.timeout
-        self.request.setValue(self.userAgent, forHTTPHeaderField: "User-Agent")
+//        self.request.URL = NSURL(string: self.urlStringForRequest())
+//
+//        self.request.timeoutInterval = self.timeout
+//        self.request.setValue(self.userAgent, forHTTPHeaderField: "User-Agent")
         
-        let task = self.session.dataTaskWithRequest(self.request) { data, response, error in
+        
+        
+        let task = self.session.dataTaskWithRequest(self.createRequest()) { data, response, error in
             if let err = error {
                 NSLog("erreur base")
                 //self.delegate.request(self, didFailWithError: err)
@@ -110,65 +123,77 @@ class BSRequest {
 
                 //let responseAffiche = NSJSONSerialization.JSONObjectWithData(data, options:.AllowFragments, error: &error) as NSDictionary
                 if let err = error {
-                    NSLog("url : \(self.urlStringForRequest())")
-                    NSLog("erreur json\ndata :\n\(data)")
+                    let stringData = NSString(data: data, encoding: NSUTF8StringEncoding)
+                    NSLog("url : \(self.urlStringForRequest())\nerreur json\ndata :\n\(stringData)")
                     handleError(err)
                 } else {
                    //NSLog("infos recue : \(responseAffiche)")
 
-                    let root = response["root"]
                     var error2: NSError?
-                    var errorAvere = false
                     
-                    let err = root["errors"]["error"]
+                    let err = response["errors"]["error"]
 
                     if err != JSON.Null(error2) {
-                        errorAvere = true
                         let code = err["code"].integerValue!
                         println("err : \(err)")
                         
                         var nouvelleError = NSError(domain:"BetaSerieError", code:code, userInfo: nil)
                         handleError(nouvelleError)
-                    }
-                    
-                    if !errorAvere {
-                        completionHandler(root)
+                    } else {
+                        completionHandler(response)
                     }
                 }
             }
         }
         task.resume()
-        
     }
+    
+    private func createRequest() -> NSURLRequest {
+        var request = NSMutableURLRequest()
+        request.URL = NSURL(string: self.urlStringForRequest())
+        request.timeoutInterval = self.timeout
+        request.HTTPMethod = self.httpMethod.rawValue
+        request.setValue(self.userAgent, forHTTPHeaderField: "User-Agent")
+
+        request.setValue(self.apiKey, forHTTPHeaderField: "X-BetaSeries-Key")
+        
+        request.setValue("2.3", forHTTPHeaderField:"X-BetaSeries-Version")
+        
+        if token != "" {
+            request.setValue(self.token, forHTTPHeaderField:"X-BetaSeries-Token")
+        }
+        
+        return request
+    }
+    
+    
     
     
     private func urlStringForRequest() -> String {
-        return BSRequest.pathForCategory(self.category, method: self.method, object: self.object, options: self.options, apiKey: self.apiKey, token: self.token)
-    }
-    
-    private class func pathForCategory(category: BSRequestCategory, method:BSRequestMethod, object:BSRequestObject?, options:BSRequestOptions, apiKey: String?, token: String?) -> String {
-        
-        var url_final = "\(betaseries_api_url)\(category.rawValue)/\(method.rawValue)"
+        var url_final = "\(betaseries_api_url)\(self.category.rawValue)/\(self.method.rawValue)"
         
         if let objet = object {
             url_final += "/\(objet)"
         }
         
-        url_final += ".json?"
+        //url_final += ".json" //?key=\(self.apiKey)&"
+//
+//        if token != "" {
+//            url_final += "token=\(self.token)&"
+//        }
         
-        if let cle = apiKey {
-            url_final += "key=\(cle)&"
+        if options.count > 0 {
+            url_final += "?"
         }
-        
-        if let tok = token {
-            url_final += "token=\(tok)&"
-        }
-        
+    
         for (cle, valeur) in options {
             url_final += "\(cle)=\(valeur)&"
         }
         
+//        url_final += "v=2.3"
+        
         return url_final
+
     }
 }
 

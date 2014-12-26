@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="6221" systemVersion="14B25" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
+    <dependencies>
+        <plugIn identifier="com.apple.AVKitIBPlugin" version="6221"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="6221"/>
+    </dependencies>
+    <objects>
+        <customObject id="-2" userLabel="File's Owner" customClass="EpisodeViewController" customModule="SeriesViewer" customModuleProvider="target">
+            <connections>
+                <outlet property="chercherFichierButton" destination="F9h-ko-BFw" id="50G-L0-fYt"/>
+                <outlet property="descriptionView" destination="uUN-wG-urv" id="Ywk-Qe-6Lr"/>
+                <outlet property="playerView" destination="glH-Ph-dbi" id="GL3-tJ-jGz"/>
+                <outlet property="titreTextField" destination="Thw-7e-fAw" id="KD2-KW-wL6"/>
+                <outlet property="view" destination="Hz6-mo-xeY" id="0bl-1N-x8E"/>
+                <outlet property="vueSegmentedControl" destination="adI-sD-QXC" id="SRe-PW-96o"/>
+            </connections>
+        </customObject>
+        <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
+        <customObject id="-3" userLabel="Application" customClass="NSObject"/>
+        <customView id="Hz6-mo-xeY">
+            <rect key="frame" x="0.0" y="0.0" width="667" height="463"/>
+            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+            <subviews>
+                <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="F9h-ko-BFw">
+                    <rect key="frame" x="262" y="264" width="142" height="32"/>
+                    <buttonCell key="cell" type="push" title="Chercher Fichier" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="stf-qb-nzL">
+                        <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="chercheFichier:" target="-2" id="msi-60-ej4"/>
+                    </connections>
+                </button>
+                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Thw-7e-fAw">
+                    <rect key="frame" x="18" y="407" width="63" height="36"/>
+                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Titre" id="rnT-wg-3aa">
+                        <font key="font" size="30" name=".HelveticaNeueDeskInterface-Regular"/>
+                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <scrollView borderType="none" horizontalLineScroll="10" horizontalPageScroll="10" verticalLineScroll="10" verticalPageScroll="10" hasHorizontalScroller="NO" usesPredominantAxisScrolling="NO" translatesAutoresizingMaskIntoConstraints="NO" id="plO-8k-VLB">
+                    <rect key="frame" x="20" y="20" width="627" height="135"/>
+                    <clipView key="contentView" copiesOnScroll="NO" id="dwt-6I-6yc">
+                        <rect key="frame" x="1" y="1" width="223" height="133"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <textView editable="NO" drawsBackground="NO" importsGraphics="NO" findStyle="panel" continuousSpellChecking="YES" allowsUndo="YES" usesRuler="YES" usesFontPanel="YES" verticallyResizable="YES" allowsNonContiguousLayout="YES" quoteSubstitution="YES" dashSubstitution="YES" spellingCorrection="YES" smartInsertDelete="YES" id="uUN-wG-urv">
+                                <rect key="frame" x="0.0" y="0.0" width="223" height="135"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                <size key="minSize" width="627" height="135"/>
+                                <size key="maxSize" width="647" height="10000000"/>
+                                <color key="insertionPointColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                <size key="minSize" width="627" height="135"/>
+                                <size key="maxSize" width="647" height="10000000"/>
+                            </textView>
+                        </subviews>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                    </clipView>
+                    <constraints>
+                        <constraint firstAttribute="height" constant="135" id="O0X-lH-vYF"/>
+                    </constraints>
+                    <scroller key="horizontalScroller" hidden="YES" verticalHuggingPriority="750" doubleValue="1" horizontal="YES" id="Wfx-SR-6VH">
+                        <rect key="frame" x="-100" y="-100" width="87" height="18"/>
+                        <autoresizingMask key="autoresizingMask"/>
+                    </scroller>
+                    <scroller key="verticalScroller" verticalHuggingPriority="750" doubleValue="1" horizontal="NO" id="CTg-lU-X3H">
+                        <rect key="frame" x="224" y="1" width="15" height="133"/>
+                        <autoresizingMask key="autoresizingMask"/>
+                    </scroller>
+                </scrollView>
+                <avPlayerView hidden="YES" controlsStyle="floating" translatesAutoresizingMaskIntoConstraints="NO" id="glH-Ph-dbi">
+                    <rect key="frame" x="20" y="163" width="627" height="236"/>
+                </avPlayerView>
+                <segmentedControl verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="adI-sD-QXC">
+                    <rect key="frame" x="529" y="412" width="120" height="24"/>
+                    <segmentedCell key="cell" borderStyle="border" alignment="left" style="rounded" trackingMode="selectOne" id="OaL-cX-H1I">
+                        <font key="font" size="13" name="HelveticaNeue"/>
+                        <segments>
+                            <segment label="Vue" width="57" selected="YES"/>
+                            <segment label="Pas Vue" width="56" tag="1"/>
+                        </segments>
+                    </segmentedCell>
+                    <connections>
+                        <action selector="changeVue:" target="-2" id="BdG-dO-boq"/>
+                    </connections>
+                </segmentedControl>
+            </subviews>
+            <constraints>
+                <constraint firstItem="glH-Ph-dbi" firstAttribute="centerY" secondItem="F9h-ko-BFw" secondAttribute="centerY" id="2HL-Dp-3f3"/>
+                <constraint firstAttribute="bottom" secondItem="plO-8k-VLB" secondAttribute="bottom" constant="20" symbolic="YES" id="I38-J5-sgn"/>
+                <constraint firstItem="plO-8k-VLB" firstAttribute="leading" secondItem="Hz6-mo-xeY" secondAttribute="leading" constant="20" symbolic="YES" id="J4j-0U-dce"/>
+                <constraint firstAttribute="trailing" secondItem="plO-8k-VLB" secondAttribute="trailing" constant="20" symbolic="YES" id="Ope-NK-Ysc"/>
+                <constraint firstItem="adI-sD-QXC" firstAttribute="centerY" secondItem="Thw-7e-fAw" secondAttribute="centerY" id="RNr-mt-ROI"/>
+                <constraint firstItem="Thw-7e-fAw" firstAttribute="top" secondItem="Hz6-mo-xeY" secondAttribute="top" constant="20" symbolic="YES" id="Rlx-vn-v7n"/>
+                <constraint firstItem="plO-8k-VLB" firstAttribute="top" secondItem="glH-Ph-dbi" secondAttribute="bottom" constant="8" symbolic="YES" id="SUn-3T-q2q"/>
+                <constraint firstItem="glH-Ph-dbi" firstAttribute="top" secondItem="Thw-7e-fAw" secondAttribute="bottom" constant="8" symbolic="YES" id="bNh-UP-rnl"/>
+                <constraint firstAttribute="trailing" secondItem="glH-Ph-dbi" secondAttribute="trailing" constant="20" symbolic="YES" id="ktE-iX-z5x"/>
+                <constraint firstItem="glH-Ph-dbi" firstAttribute="leading" secondItem="Hz6-mo-xeY" secondAttribute="leading" constant="20" symbolic="YES" id="m3S-i3-bmw"/>
+                <constraint firstAttribute="centerX" secondItem="F9h-ko-BFw" secondAttribute="centerX" id="pAK-Ha-NBT"/>
+                <constraint firstAttribute="trailing" secondItem="adI-sD-QXC" secondAttribute="trailing" constant="20" symbolic="YES" id="tBS-ga-NVu"/>
+                <constraint firstItem="Thw-7e-fAw" firstAttribute="leading" secondItem="Hz6-mo-xeY" secondAttribute="leading" constant="20" symbolic="YES" id="tDY-UK-Kwi"/>
+            </constraints>
+            <point key="canvasLocation" x="350.5" y="310.5"/>
+        </customView>
+    </objects>
+</document>

@@ -41,14 +41,14 @@ class AccesBetaSerie : NSObject{
     
     override init() {
         
-        self.betaSerie = BetaSeries(apiKey: cleAPI)
+        self.betaSerie = BetaSeries(apiKey: self.cleAPI)
         
         super.init()
         
         self.betaSerie.token = self.token ?? ""
         
         NSNotificationCenter.defaultCenter().addObserver(self, selector: "recuperationToken:", name: "recuperationToken", object: nil)
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "finVerificationToken:", name: "tokenActive", object: nil)
+        NSNotificationCenter.defaultCenter().addObserver(self, selector: "finVerificationToken", name: "tokenActive", object: nil)
         NSNotificationCenter.defaultCenter().addObserver(self, selector: "finRecupereSeries:", name: "resultatMembre", object: nil)
         NSNotificationCenter.defaultCenter().addObserver(self, selector: "finRecupereSerie", name: "serieComplete", object: nil)
 
@@ -58,22 +58,9 @@ class AccesBetaSerie : NSObject{
         if let token = self.token {
             self.betaSerie.isActiveToken()
         } else {
-            let notif = NSNotification(name: "tokenActive", object: self, userInfo:["tokenValable" : "false"])
-            self.finVerificationToken(notif)
+            NSNotificationCenter.defaultCenter().postNotificationName("afficheDemandeMembre", object: self)
         }
     }
-    
-    func finVerificationToken(notification: NSNotification) {
-        NSLog("fin verif token")
-        if let valeur = notification.userInfo?["tokenValable"] as? String {
-            if valeur == "false" {
-                NSNotificationCenter.defaultCenter().postNotificationName("afficheDemandeMembre", object: self)
-            } else {
-                self.recupereSeries()
-            }
-        }
-    }
-
     
     func connexionMembre(identifiant: String, password: String) {
         NSLog("demande de token")
@@ -99,9 +86,9 @@ class AccesBetaSerie : NSObject{
     }
     
     
-    func recupereSerieEntiere(serie: Serie) {
-        self.betaSerie.recupSerie(serie)
-    }
+//    func recupereSerieEntiere(serie: Serie) {
+//        self.betaSerie.recupSerie(serie)
+//    }
     
     func finRecupereSeries(notification: NSNotification) {
         if let member = notification.userInfo?["member"] as? Member {
@@ -111,9 +98,6 @@ class AccesBetaSerie : NSObject{
         
         if let series = notification.userInfo?["series"] as? [Serie] {
             self.seriesComplete = series.count
-            series.map {
-                self.recupereSerieEntiere($0)
-            }
             NSNotificationCenter.defaultCenter().postNotificationName("recuperationSeries", object: self, userInfo:["series" : series])
         }
     }
@@ -127,6 +111,11 @@ class AccesBetaSerie : NSObject{
     
     func chercheSerie(nom: String) {
         self.betaSerie.searchShow(nom)
+    }
+    
+    
+    func marqueVue(episode:Episode) {
+        self.betaSerie.markAsWatched(episode)
     }
     
 

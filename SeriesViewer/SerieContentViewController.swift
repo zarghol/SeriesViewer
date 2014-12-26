@@ -18,7 +18,8 @@ class SerieContentViewController: NSViewController {
     @IBOutlet weak var dureeEpisodeTextView: NSTextField!
     @IBOutlet weak var genresTextView: NSTextField!
     @IBOutlet weak var statutTextView: NSTextField!
-    @IBOutlet weak var descriptionTextView: NSTextField!
+    @IBOutlet var descriptionTextView: NSTextView!
+    // TODO archive/active segment control
     
     convenience init?(nibName:String = "SerieContentView") {
         self.init(nibName: nibName, bundle: nil)
@@ -34,19 +35,24 @@ class SerieContentViewController: NSViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        if let urlImage = self.serie.url_banner {
-            println(urlImage)
-            if let nsUrlImage = NSURL(string: urlImage) {
-                self.banniereImageView.image = NSImage(byReferencingURL: nsUrlImage)
-            }
-        }
+        self.recupBanniere()
         //self.visualEffectView
         self.titreTextView.stringValue = self.serie.nomItem
         self.visualEffectView.invalidateIntrinsicContentSize()
         self.dureeEpisodeTextView.integerValue = self.serie.dureeEpisode
         self.genresTextView.stringValue = self.serie.genres.reduce("", combine: {$0 + $1 + "\n"})
         self.statutTextView.stringValue = self.serie.status.rawValue
-        self.descriptionTextView.stringValue = self.serie.descriptionSerie
+        self.descriptionTextView.string = self.serie.descriptionSerie
+        
+        NSNotificationCenter.defaultCenter().addObserver(self, selector: "recupBanniere", name: "banniereRecupere", object: nil)
+    }
+    
+    func recupBanniere() {
+        if let urlImage = self.serie.banner {
+            if let nsUrlImage = NSURL(string: urlImage) {
+                self.banniereImageView.image = NSImage(byReferencingURL: nsUrlImage)
+            }
+        }
     }
     
 }

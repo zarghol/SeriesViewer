@@ -13,6 +13,14 @@ class HeaderItem : MenuItem {
     init(nom: String) {
         super.init(nom: nom, items: [Serie]())
     }
+
+    required init(coder aDecoder: NSCoder) {
+        super.init(coder: aDecoder)
+    }
+    
+    override func encodeWithCoder(aCoder: NSCoder) {
+        super.encodeWithCoder(aCoder)
+    }
     
      func ajouterSeries(series:[Serie]) {
         for serie in series {

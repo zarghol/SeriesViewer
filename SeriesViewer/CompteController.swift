@@ -11,6 +11,7 @@ import Cocoa
 class CompteController: NSViewController {
 
     @IBOutlet weak var boutonDeconnexion: NSButton!
+    @IBOutlet weak var textFieldBonjour: NSTextField!
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -18,6 +19,8 @@ class CompteController: NSViewController {
         if AccesBetaSerie.acces.token == nil {
             self.boutonDeconnexion.enabled = false
             NSNotificationCenter.defaultCenter().postNotificationName("afficheDemandeMembre", object: self)
+        } else {
+            self.textFieldBonjour.stringValue = "Bonjour \(AccesBetaSerie.acces.member?.login)"
         }
     }
     

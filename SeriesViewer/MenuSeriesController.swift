@@ -19,18 +19,14 @@ class MenuSeriesController: NSViewController, NSOutlineViewDataSource, NSOutline
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        let serie1 = Serie(nom: "Série Test", active: true, url: "")
-        //serie1.creerSaison(1)
-        serie1.ajouterEpisode("Il était une fois..", description: "", aSaison: 1)
         
-        let serie2 = Serie(nom: "Série 2", active: false, url: "")
-
-        self.recupereSeries([serie1, serie2])
+        self.recupereSeries(Persistance.acces.series)
+        
         self.changeContentViewWithSelection(0)
-        NSNotificationCenter.defaultCenter().addObserver(self, selector:"recupereSeries:", name:"recuperationSeries", object:nil)
+        
         NSNotificationCenter.defaultCenter().addObserver(self, selector:"afficheDemandeMembre", name:"afficheDemandeMembre", object:nil)
         NSNotificationCenter.defaultCenter().addObserver(self, selector:"seriesCompletes", name:"rechargeAffichage", object:nil)
-
+        NSNotificationCenter.defaultCenter().addObserver(self, selector: "tokenActif", name: "tokenActive", object: nil)
     }
     
     override func viewDidAppear() {
@@ -103,7 +99,12 @@ class MenuSeriesController: NSViewController, NSOutlineViewDataSource, NSOutline
                 var viewController = SerieContentViewController()
                 viewController?.serie = item as Serie
                 self.contentController = viewController
-                
+            
+            case is Episode:
+                var viewController = EpisodeViewController()
+                viewController?.episode = item as Episode
+                self.contentController = viewController
+            
             default:
                 self.contentController = DefaultContentViewController()
         }
@@ -119,17 +120,15 @@ class MenuSeriesController: NSViewController, NSOutlineViewDataSource, NSOutline
         self.contentView.addSubview(self.contentController!.view)
     }
     
+    func tokenActif() {
+        AccesBetaSerie.acces.recupereSeries()
+    }
+    
     func rechargeAffichage() {
         Async.main {
             self.outlineView.reloadData()
             self.outlineView.sizeLastColumnToFit()
             self.outlineView.floatsGroupRows = false
-        }
-    }
-    
-    func recupereSeries(notification: NSNotification) {
-        if let series = notification.userInfo?["series"] as? [Serie] {
-            self.recupereSeries(series)
         }
     }
     
