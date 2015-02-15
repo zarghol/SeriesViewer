@@ -8,56 +8,69 @@
 
 import Foundation
 
-class Saison : MenuItem, NSCoding, NSCopying {
+class Saison : NSObject, NSCoding, NSCopying, MenuItem {
+    var nomItem: String {
+        return "Saison \(self.numeroSaison)"
+    }
+    
+    var items: [AnyObject] {
+        return self.episodes
+    }
+    
+    var cellIdentifier: String {
+        return "SaisonCell"
+    }
+    
+    var episodes: [Episode]
+    
+    
     let numeroSaison: Int
     
-    init(numero: Int, nomSaison: String = "") {
+    init(numero: Int) {
         self.numeroSaison = numero
-        super.init(nom: nomSaison, items: [Episode]())
+        self.episodes = [Episode]()
     }
     
     init(saison: Saison) {
         self.numeroSaison = saison.numeroSaison
-        super.init(nom: saison.nomItem, items: saison.items)
+        self.episodes = saison.episodes
     }
     
     required init(coder aDecoder: NSCoder) {
         self.numeroSaison = aDecoder.decodeIntegerForKey("numeroSaison")
-        super.init(coder: aDecoder)
+        self.episodes = aDecoder.decodeObjectForKey("episodes") as! [Episode]
     }
     
-    override func encodeWithCoder(aCoder: NSCoder) {
+    func encodeWithCoder(aCoder: NSCoder) {
         aCoder.encodeInteger(self.numeroSaison, forKey: "numeroSaison")
-        super.encodeWithCoder(aCoder)
+        aCoder.encodeObject(self.episodes, forKey: "episodes")
     }
     
-    override func copyWithZone(zone: NSZone) -> AnyObject {
+    func copyWithZone(zone: NSZone) -> AnyObject {
         return Saison(saison: self)
     }
     
-    override func nom() -> String {
-        var nomSaison = "Saison \(self.numeroSaison)"
-        if nomItem != "" {
-            nomSaison += " : \(self.nomItem)"
-        }
-        return nomSaison
-    }
-    
     func ajouteEpisode(episode: Episode) {
-        self.items.append(episode)
+        self.episodes.append(episode)
     }
     
-    func creerEpisode(nom: String, description: String, id: Int, vue: Bool) {
-        self.creerEpisode(nom, description: description, numEpisode: self.items.count+1, id: id, vue: vue)
+    func trie() {
+        self.episodes.sort{ return $0.numEpisode < $1.numEpisode }
     }
     
-    func creerEpisode(nom: String, description: String, numEpisode: Int, id: Int, vue: Bool) {
-        let episode = Episode(nom: nom, numEpisode: numEpisode, id: id, vue: vue, description: description)
-        self.items.append(episode)
-    }
-    
-    override func trie() {
-        self.items.sort{ return ($0 as Episode).numEpisode < ($1 as Episode).numEpisode }
+    func fusion(saison:Saison) {
+        let min = saison.episodes.count <= self.episodes.count ? saison.episodes.count : self.episodes.count
+        
+        for i in 0..<min {
+            self.episodes[i].fusion(saison.episodes[i])
+        }
+        
+        // si y a plus d'épisodes localement, (très étrange) on les prend
+        if self.episodes.count < saison.episodes.count {
+            for i in self.episodes.count..<saison.episodes.count {
+                self.ajouteEpisode(saison.episodes[i])
+            }
+        }
     }
 }
 

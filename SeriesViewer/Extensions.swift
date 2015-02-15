@@ -23,8 +23,7 @@ extension String {
             }
             
             result.destroy()
-            
-            return String(format: hash)
+            return String(hash)
             
         }
         return self
@@ -40,6 +39,12 @@ extension String {
         return nsself.floatValue ?? 0.0
     }
 }
+
+//extension Array {
+//    func contains<U>(element: U) -> Bool {
+//        return contains(self, x:element)
+//    }
+//}
 
 extension Dictionary {
     
@@ -81,5 +86,4 @@ extension Dictionary {
         }
         return results
     }
-    
 }

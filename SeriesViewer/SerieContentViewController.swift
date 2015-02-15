@@ -19,6 +19,7 @@ class SerieContentViewController: NSViewController {
     @IBOutlet weak var genresTextView: NSTextField!
     @IBOutlet weak var statutTextView: NSTextField!
     @IBOutlet var descriptionTextView: NSTextView!
+    @IBOutlet var archiveSegmentControl: NSSegmentedControl!
     // TODO archive/active segment control
     
     convenience init?(nibName:String = "SerieContentView") {
@@ -35,24 +36,13 @@ class SerieContentViewController: NSViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        self.recupBanniere()
-        //self.visualEffectView
+        self.banniereImageView.image = self.serie.banner
         self.titreTextView.stringValue = self.serie.nomItem
         self.visualEffectView.invalidateIntrinsicContentSize()
         self.dureeEpisodeTextView.integerValue = self.serie.dureeEpisode
         self.genresTextView.stringValue = self.serie.genres.reduce("", combine: {$0 + $1 + "\n"})
         self.statutTextView.stringValue = self.serie.status.rawValue
         self.descriptionTextView.string = self.serie.descriptionSerie
-        
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "recupBanniere", name: "banniereRecupere", object: nil)
-    }
-    
-    func recupBanniere() {
-        if let urlImage = self.serie.banner {
-            if let nsUrlImage = NSURL(string: urlImage) {
-                self.banniereImageView.image = NSImage(byReferencingURL: nsUrlImage)
-            }
-        }
     }
     
 }

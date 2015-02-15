@@ -8,31 +8,52 @@
 
 import Foundation
 
-class HeaderItem : MenuItem {
+class HeaderItem : NSObject, NSCopying, NSCoding, MenuItem {
+    var nomItem: String
+    private(set)var series: [Serie]
+    
+    
+    var items: [AnyObject] {
+        return self.series
+    }
+    
+    var cellIdentifier: String {
+        return "HeaderCell"
+    }
     
     init(nom: String) {
-        super.init(nom: nom, items: [Serie]())
+        self.nomItem = nom
+        self.series = [Serie]()
+    }
+    
+    init(headerItem: HeaderItem) {
+        self.nomItem = headerItem.nomItem
+        self.series = headerItem.series
     }
 
     required init(coder aDecoder: NSCoder) {
-        super.init(coder: aDecoder)
+        self.nomItem = aDecoder.decodeObjectForKey("nomHeader") as! String
+        self.series = aDecoder.decodeObjectForKey("itemsSeries") as! [Serie]
     }
     
-    override func encodeWithCoder(aCoder: NSCoder) {
-        super.encodeWithCoder(aCoder)
+    func encodeWithCoder(aCoder: NSCoder) {
+        aCoder.encodeObject(self.nomItem, forKey: "nomHeader")
+        aCoder.encodeObject(self.series, forKey: "itemsSeries")
+    }
+    
+    func copyWithZone(zone: NSZone) -> AnyObject {
+        return HeaderItem(headerItem: self)
     }
     
      func ajouterSeries(series:[Serie]) {
-        for serie in series {
-            self.items.append(serie)
-        }
+        self.series.extend(series)
     }
     
      func ajouterSerie(serie:Serie) {
-        self.items.append(serie)
+        self.series.append(serie)
     }
     
     func viderSeries() {
-        self.items.removeAll()
+        self.series.removeAll()
     }
 }

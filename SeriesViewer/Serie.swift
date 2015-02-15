@@ -6,7 +6,7 @@
 //  Copyright (c) 2014 Clément NONN. All rights reserved.
 //
 
-import Foundation
+import Cocoa
 
 enum StatutSeries: String {
     case Ended = "Ended"
@@ -14,44 +14,82 @@ enum StatutSeries: String {
     case Continuing = "Continuing"
 }
 
-class Serie : MenuItem, NSCoding, NSCopying {
-    var active: Bool
-    var url: String
+class Serie : NSObject, NSCoding, NSCopying, Equatable, MenuItem {
+    
+    var nomSerie: String
+    var saisons: [Saison]
+    
+    var nomItem: String {
+        return self.nomSerie
+    }
+    
+    var items: [AnyObject] {
+        return self.saisons
+    }
+    
+    var cellIdentifier: String {
+        return "SerieCell"
+    }
     
     var id: Int
-    
-    var banner: String?
+    var banner: NSImage?
     var descriptionSerie: String
     var dureeEpisode: Int // en Minutes
     var genres: [String]
     var id_thetvdb: Int
+
     var status: StatutSeries
     var anneeCreation: Int
-    // note
+
+    var active: Bool
     
     
-    //var image: IKImage?
+    var toutVue:Bool {
+        for episode in self.episodes() {
+            if !episode.vue && episode.date != nil && episode.date!.compare(NSDate()) == NSComparisonResult.OrderedAscending {
+                return false
+            }
+        }
+        return true
+    }
     
-    init(nom: String, active: Bool, url: String) {
-        self.active = active
-        self.url = url
+    
+    init(nom: String, active: Bool) {
+        self.nomSerie = nom
+        self.saisons = [Saison]()
         
+        self.id = -1
         self.banner = nil
         self.descriptionSerie = ""
         self.dureeEpisode = 0
         self.genres = [String]()
         self.id_thetvdb = -1
-        self.id = -1
+        
         self.status = .Autre
         self.anneeCreation = 0
+
+        self.active = active
+    }
+    
+    init(json: JSON) {
+        self.nomSerie = json["title"].stringValue
+        self.saisons = [Saison]()
+        self.id = json["id"].intValue
+        self.descriptionSerie = json["description"].stringValue
+        self.dureeEpisode = json["length"].intValue
+        self.genres = json["genres"].arrayValue.map{ return $0.stringValue }
+        self.id_thetvdb = json["thetvdb_id"].intValue
         
+        self.status = StatutSeries(rawValue: json["status"].stringValue) ?? .Autre
+        self.anneeCreation = json["creation"].intValue
         
-        super.init(nom: nom, items: [Saison]())
+        self.active = !json["user"]["archived"].boolValue
     }
     
     init(serie:Serie) {
+        self.nomSerie = serie.nomSerie
+        self.saisons = serie.saisons
         self.active = serie.active
-        self.url = serie.url
         
         self.banner = serie.banner
         self.descriptionSerie = serie.descriptionSerie
@@ -62,27 +100,31 @@ class Serie : MenuItem, NSCoding, NSCopying {
         self.status = serie.status
         self.anneeCreation = serie.anneeCreation
         
-        super.init(nom: serie.nomItem, items: serie.items)
     }
     
     required init(coder aDecoder: NSCoder) {
+        self.nomSerie = (aDecoder.decodeObjectForKey("nomSerie") as? String) ?? ""
+        self.saisons = (aDecoder.decodeObjectForKey("saisons") as? [Saison]) ?? [Saison]()
         self.active = aDecoder.decodeBoolForKey("active")
-        self.url = aDecoder.decodeObjectForKey("url") as String
         
-        self.banner = aDecoder.decodeObjectForKey("banner") as String?
-        self.descriptionSerie = aDecoder.decodeObjectForKey("descriptionSerie") as String
+        self.banner = aDecoder.decodeObjectForKey("banner") as? NSImage
+        self.descriptionSerie = (aDecoder.decodeObjectForKey("descriptionSerie") as? String) ?? ""
         self.dureeEpisode = aDecoder.decodeIntegerForKey("dureeEpisode")
-        self.genres = aDecoder.decodeObjectForKey("genres") as [String]
+        self.genres = (aDecoder.decodeObjectForKey("genres") as? [String]) ?? [String]()
         self.id_thetvdb = aDecoder.decodeIntegerForKey("id_thetvdb")
         self.id = aDecoder.decodeIntegerForKey("id")
-        self.status = StatutSeries(rawValue: aDecoder.decodeObjectForKey("status") as String)!
+        if let statusText = aDecoder.decodeObjectForKey("status") as? String {
+            self.status = StatutSeries(rawValue: statusText)!
+        } else {
+            self.status = .Autre
+        }
         self.anneeCreation = aDecoder.decodeIntegerForKey("anneeCreation")
-        super.init(coder: aDecoder)
     }
     
-    override func encodeWithCoder(aCoder: NSCoder) {
+    func encodeWithCoder(aCoder: NSCoder) {
+        aCoder.encodeObject(self.nomSerie, forKey: "nomSerie")
+        aCoder.encodeObject(self.saisons, forKey: "saisons")
         aCoder.encodeBool(self.active, forKey: "active")
-        aCoder.encodeObject(self.url, forKey: "url")
         aCoder.encodeObject(self.banner, forKey: "banner")
         aCoder.encodeObject(self.descriptionSerie, forKey: "descriptionSerie")
         aCoder.encodeInteger(self.dureeEpisode, forKey: "dureeEpisode")
@@ -91,36 +133,42 @@ class Serie : MenuItem, NSCoding, NSCopying {
         aCoder.encodeInteger(self.id, forKey: "id")
         aCoder.encodeObject(self.status.rawValue, forKey: "status")
         aCoder.encodeInteger(self.anneeCreation, forKey: "anneeCreation")
-        super.encodeWithCoder(aCoder)
     }
     
-    override func copyWithZone(zone: NSZone) -> AnyObject {
+    func copyWithZone(zone: NSZone) -> AnyObject {
         return Serie(serie:self)
     }
     
-    func differentiel(serie:Serie) {
-        fatalError("unimplementedMethod")
-        // TODO fini cette méthode
-    }
-    
-    
-    
-    func ajouteSaison(saison: Saison) {
-        self.items.append(saison)
-    }
-    
-     func creerSaison(numSaison: Int, nomSaison: String = "") {
-        var saisons = self.items.filter { let saison = $0 as Saison; return saison.numeroSaison == numSaison }
-        if saisons.count == 0 {
-            let saison = Saison(numero: numSaison, nomSaison: nomSaison)
-            self.items.append(saison)
+    /**
+        On effectue le différentielle entre la version en ligne (self) et celle locale (serie)
+
+    */
+    func fusion(serie:Serie) {
+        let min = (self.saisons.count < serie.saisons.count ? self.saisons.count : serie.saisons.count)
+        
+        // pour toutes les saisons en commun on met à jour
+        for i in 0..<min {
+            self.saisons[i].fusion(serie.saisons[i])
+        }
+        
+        // si y a plus de saison localement, (très étrange) on les prend
+        if self.saisons.count < serie.saisons.count {
+            for i in self.saisons.count..<serie.saisons.count {
+                self.ajouteSaison(serie.saisons[i])
+            }
         }
     }
     
-    func ajouterEpisode(nomEpisode: String, description: String, numEpisode: Int, id: Int, vue: Bool, aSaison numSaison: Int) {
-        var saison = self.trouveOuCreeSaison(numSaison)
-
-        saison.creerEpisode(nomEpisode, description: description, numEpisode: numEpisode, id: id, vue: vue)
+    func ajouteSaison(saison: Saison) {
+        self.saisons.append(saison)
+    }
+    
+     func creerSaison(numSaison: Int) {
+        var saisons = self.saisons.filter { return $0.numeroSaison == numSaison }
+        if saisons.count == 0 {
+            let saison = Saison(numero: numSaison)
+            self.saisons.append(saison)
+        }
     }
     
     func ajouterEpisode(episode:Episode, aSaison numSaison:Int) {
@@ -131,10 +179,10 @@ class Serie : MenuItem, NSCoding, NSCopying {
     
     /// trouve une saison existante, ou la créé si besoin
     private func trouveOuCreeSaison(numSaison:Int) -> Saison {
-        let array = self.items.filter { return ($0 as Saison).numeroSaison == numSaison }
-        var saison : Saison
+        let array = self.saisons.filter { return $0.numeroSaison == numSaison }
+        var saison: Saison
         if array.count > 0 {
-            saison = array[0] as Saison
+            saison = array[0]
         } else {
             saison = Saison(numero: numSaison)
             self.ajouteSaison(saison)
@@ -142,10 +190,28 @@ class Serie : MenuItem, NSCoding, NSCopying {
         return saison
     }
     
-    override func trie() {
-        self.items.sort{
-            return ($0 as Saison).numeroSaison < ($1 as Saison).numeroSaison
+    func trie() {
+        self.saisons.sort{
+            return $0.numeroSaison < $1.numeroSaison
         }
-        super.trie()
+    }
+    
+    func episodes() -> [Episode] {
+        var result = [Episode]()
+        
+        for saison in self.saisons {
+            var eps : [Episode] = saison.episodes.map { $0 }
+            result.extend(eps)
+        }
+        return result
     }
 }
+
+func ==(s1: Serie, s2: Serie) -> Bool {
+    return s1.id == s2.id
+}
+
+func !=(s1: Serie, s2: Serie) -> Bool {
+    return !(s1 == s2)
+}
+

@@ -21,12 +21,6 @@ class IdentificationController: NSViewController {
         super.viewDidLoad()
         // Do view setup here.
         self.frameOriginLabel = self.labelMauvais.frame
-        
-        NSNotificationCenter.defaultCenter().addObserver(self, selector:"mdpOK", name:"recuperationToken", object:nil)
-        
-        NSNotificationCenter.defaultCenter().addObserver(self, selector:"mdpMauvais", name:"mauvaisPassword", object:nil)
-
-
     }
     
     @IBAction func annulerAction(sender: AnyObject) {
@@ -35,25 +29,24 @@ class IdentificationController: NSViewController {
     
     @IBAction func envoyerAction(sender: NSButton) {
         // envoyer
+        NSLog("ask Login")
         let id = self.identifiantTextField.stringValue
         let mdp = self.mdptextField.stringValue
-        AccesBetaSerie.acces.connexionMembre(id, password: mdp)
-    }
-    
-    func mdpMauvais() {
-        dispatch_async(dispatch_get_main_queue(), {
-            self.labelMauvais.hidden = false
-            self.shake(self.labelMauvais)
-        })
-    }
-    
-    
-    func mdpOK() {
-        dispatch_async(dispatch_get_main_queue(), {
-            if self.presentedViewControllers?.count > 0 {
-                self.dismissViewController(self)
+        AccesBetaSerie.acces.memberLogin(id, password: mdp) { error in
+            if let err = error {
+                Async.main {
+                    self.labelMauvais.hidden = false
+                    self.shake(self.labelMauvais)
+                }
+            } else {
+                NSLog("accepted")
+                Async.main {
+                    if self.presentedViewControllers?.count > 0 {
+                        self.dismissViewController(self)
+                    }
+                }
             }
-        })
+        }
     }
     
     func shake(view: NSView) {
@@ -65,9 +58,6 @@ class IdentificationController: NSViewController {
             animation.startAnimation()
         }
         
-        
-        
-//        
 //        NSView.animateWithDuration(0.03, animations: {
 //            view.transform = CGAffineTransformMakeTranslation(5 * directionActuelle, 0)
 //        }, completion: { finished in

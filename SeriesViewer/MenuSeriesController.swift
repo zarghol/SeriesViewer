@@ -15,23 +15,35 @@ class MenuSeriesController: NSViewController, NSOutlineViewDataSource, NSOutline
     @IBOutlet weak var contentView: NSView!
     @IBOutlet weak var outlineView: NSOutlineView!
     var contentController : NSViewController?
-    var series: [HeaderItem] = [HeaderItem(nom: "Séries Actives"), HeaderItem(nom: "Séries Archivées")]
+    var series: [HeaderItem] = [HeaderItem(nom: "A voir"), HeaderItem(nom: "Séries Actives"), HeaderItem(nom: "Séries Archivées")]
 
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        self.recupereSeries(Persistance.acces.series)
+        self.recupereSeries()
         
         self.changeContentViewWithSelection(0)
         
-        NSNotificationCenter.defaultCenter().addObserver(self, selector:"afficheDemandeMembre", name:"afficheDemandeMembre", object:nil)
-        NSNotificationCenter.defaultCenter().addObserver(self, selector:"seriesCompletes", name:"rechargeAffichage", object:nil)
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "tokenActif", name: "tokenActive", object: nil)
+        self.view.registerForDraggedTypes([NSFilenamesPboardType])
+        NSNotificationCenter.defaultCenter().addObserver(self, selector: "fileDragged:", name: NotificationsNames.fichierRecupere.rawValue, object: nil)
     }
     
     override func viewDidAppear() {
         Async.background {
-            AccesBetaSerie.acces.verifieToken()
+            AccesBetaSerie.acces.checkOnlineToken() { isOK in
+                if isOK {
+                    let w = self.contentController?.view.frame.width ?? 300
+                    let h = w * 720 / 1280
+                    let size = CGSize(width: w, height: h)
+                    AccesBetaSerie.acces.retrieveSeries(size) {
+                        self.recupereSeries()
+                    }
+                } else {
+                    Async.main {
+                        self.performSegueWithIdentifier("loginSegue", sender: self)
+                    }
+                }
+            }
         }
     }
     
@@ -46,40 +58,22 @@ class MenuSeriesController: NSViewController, NSOutlineViewDataSource, NSOutline
     func outlineView(outlineView: NSOutlineView, numberOfChildrenOfItem item: AnyObject?) -> Int {
         
         if let it = item as? MenuItem {
-            return it.nombreEnfant()
+            return it.items.count
         } else {
             return self.series.count
         }
     }
     
     func outlineView(outlineView: NSOutlineView, isItemExpandable item: AnyObject) -> Bool {
-        let it = item as MenuItem
-        return it.nombreEnfant() > 0
+        let it = item as! MenuItem
+        return it.items.count > 0
     }
     
     func outlineView(outlineView: NSOutlineView, viewForTableColumn tableColumn: NSTableColumn?, item: AnyObject) -> NSView? {
-        let it = item as MenuItem
+        let it = item as! MenuItem
         
-        var identifier: String
-        switch item {
-            case is Serie:
-                identifier = "SerieCell"
-            
-            case is Saison:
-                identifier = "SaisonCell"
-            
-            case is Episode:
-                identifier = "EpisodeCell"
-            
-            case is HeaderItem:
-                identifier = "HeaderCell"
-            
-            default:
-                identifier = "DataCell"
-        }
-        
-        var view = outlineView.makeViewWithIdentifier(identifier, owner:self) as NSTableCellView
-        view.textField?.stringValue = it.nom()
+        var view = outlineView.makeViewWithIdentifier(it.cellIdentifier, owner:self) as! NSTableCellView
+        view.textField?.stringValue = it.nomItem
         
         return view
     }
@@ -91,18 +85,22 @@ class MenuSeriesController: NSViewController, NSOutlineViewDataSource, NSOutline
     }
     
     func changeContentViewWithSelection(selectedIndex: Int) {
-        let item = self.outlineView.itemAtRow(selectedIndex) as MenuItem
+        let item = self.outlineView.itemAtRow(selectedIndex) as! MenuItem
+        
+        if item is Saison {
+            return
+        }
         self.contentController?.view.removeFromSuperview()
         println("selectedIndex : \(selectedIndex)")
         switch item {
             case is Serie:
                 var viewController = SerieContentViewController()
-                viewController?.serie = item as Serie
+                viewController?.serie = item as! Serie
                 self.contentController = viewController
             
             case is Episode:
                 var viewController = EpisodeViewController()
-                viewController?.episode = item as Episode
+                viewController?.episode = item as! Episode
                 self.contentController = viewController
             
             default:
@@ -110,18 +108,10 @@ class MenuSeriesController: NSViewController, NSOutlineViewDataSource, NSOutline
         }
         
         var frame = self.contentView.bounds
-        frame.origin.y -= 65.0
         self.contentController!.view.frame = frame
-        self.contentController?.view.autoresizingMask = NSAutoresizingMaskOptions.ViewHeightSizable | NSAutoresizingMaskOptions.ViewWidthSizable
-        
-        println("outline : \nbounds : \(self.outlineView.bounds)\nframe : \(self.outlineView.frame)\n")
-        println("contentView : \nbounds : \(self.contentView.bounds)\nframe : \(self.contentView.frame)\n")
-        
+        self.contentController!.view.autoresizingMask = NSAutoresizingMaskOptions.ViewHeightSizable | NSAutoresizingMaskOptions.ViewWidthSizable
+
         self.contentView.addSubview(self.contentController!.view)
-    }
-    
-    func tokenActif() {
-        AccesBetaSerie.acces.recupereSeries()
     }
     
     func rechargeAffichage() {
@@ -132,12 +122,31 @@ class MenuSeriesController: NSViewController, NSOutlineViewDataSource, NSOutline
         }
     }
     
-    func recupereSeries(series: [Serie]) {
+    func fileDragged(notification: NSNotification) {
+        if let urls = notification.userInfo?["urls"] as? [String] {
+            for urlstring in urls {
+                let url = NSURL(fileURLWithPath: urlstring)!
+                if contains(["avi", "mp4", "mkv"], url.pathExtension!) {
+                    NSLog("type supported")
+                    AccesBetaSerie.acces.correspondFilename(url)
+                } else {
+                    NSLog("type not supported")
+                }
+            }
+        }
+    }
+    
+    
+    func recupereSeries() {
         self.series[0].viderSeries()
         self.series[1].viderSeries()
-        for serie in series {
+        self.series[2].viderSeries()
+        for serie in Persistance.acces.series {
             Async.main {
-                self.series[serie.active == true ? 0 : 1].ajouterSerie(serie)
+                if serie.active == true && !serie.toutVue {
+                    self.series[0].ajouterSerie(serie)
+                }
+                self.series[serie.active == true ? 1 : 2].ajouterSerie(serie)
                 self.outlineView.reloadData()
             }
         }

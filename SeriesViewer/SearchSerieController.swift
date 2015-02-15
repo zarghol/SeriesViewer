@@ -18,8 +18,6 @@ class SearchSerieController: NSViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do view setup here.
-        
-        NSNotificationCenter.defaultCenter().addObserver(self, selector:"prendMots:", name:"resultatRecherche", object:nil)
     }
     
     @IBAction func annulerRecherche(sender: NSButton) {
@@ -38,7 +36,9 @@ class SearchSerieController: NSViewController {
                 self.completePosting = false
                 textView.complete(nil)
                 if let chaine = textView.string {
-                    AccesBetaSerie.acces.chercheSerie(chaine)
+                    AccesBetaSerie.acces.searchSeries(chaine) { series in
+                        self.mots = series.map { $0.nomSerie }
+                    }
                 }
                 self.completePosting = true
             }
@@ -55,15 +55,5 @@ class SearchSerieController: NSViewController {
         var mots = self.mots
         mots.insert(motActuel, atIndex:0)
         return mots
-    }
-    
-    func prendMots(notification: NSNotification) {
-        NSLog("recupereMots")
-        if let mots = notification.userInfo?["mots"] as? [String] {
-            for mot in mots {
-                NSLog(mot)
-            }
-            self.mots = mots
-        }
     }
 }

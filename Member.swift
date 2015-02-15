@@ -8,22 +8,28 @@
 
 import Cocoa
 
-class Member : NSObject {
-    private(set) var avatar: NSImage?
-    private(set) var login: String
-    private(set) var nbBadges: Int
-    private(set) var nbEpisodes: Int
-    private(set) var progress: Float
-    private(set) var seasons: Int
-    private(set) var nbShows: Int
+class Member : NSObject {    
+    private(set) var token: String
     
-    init(login: String, avatar: NSImage? = nil, nbBadges: Int, nbEpisodes: Int, progress: Float, seasons: Int, nbShows: Int) {
-        self.login = login
-        self.avatar = avatar
-        self.nbBadges = nbBadges
-        self.nbEpisodes = nbEpisodes
-        self.progress = progress
-        self.seasons = seasons
-        self.nbShows = nbShows
+    private(set) var login: String?
+    private(set) var avatar: NSImage?
+    private(set) var nbBadges: Int?
+    private(set) var nbEpisodes: Int?
+    private(set) var progress: Float?
+    private(set) var seasons: Int?
+    private(set) var nbShows: Int?
+    
+    init(token: String) {
+        self.token = token
+    }
+    
+    func retrieveInformation(json : JSON) {
+        self.login = json["login"].stringValue
+        
+        self.nbBadges = json["stats"]["badges"].intValue
+        self.nbEpisodes = json["stats"]["episodes"].intValue
+        self.progress = json["stats"]["progress"].floatValue
+        self.seasons = json["stats"]["seasons"].intValue
+        self.nbShows = json["stats"]["shows"].intValue
     }
 }

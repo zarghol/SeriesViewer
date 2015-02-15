@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="7515.2" systemVersion="14C109" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
+    <dependencies>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="7515.2"/>
+    </dependencies>
+    <objects>
+        <customObject id="-2" userLabel="File's Owner" customClass="GeneralPanelController" customModule="SeriesViewer" customModuleProvider="target">
+            <connections>
+                <outlet property="checkCopyFile" destination="6Ec-dT-KQy" id="vzB-7r-MAS"/>
+                <outlet property="importFolderButton" destination="ZpC-nn-GNi" id="zPc-u2-6BP"/>
+                <outlet property="localBiblioPopupButton" destination="Dig-8t-Xti" id="rlX-EM-Cak"/>
+                <outlet property="view" destination="Hz6-mo-xeY" id="0bl-1N-x8E"/>
+            </connections>
+        </customObject>
+        <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
+        <customObject id="-3" userLabel="Application" customClass="NSObject"/>
+        <customView id="Hz6-mo-xeY">
+            <rect key="frame" x="0.0" y="6" width="480" height="143"/>
+            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+            <subviews>
+                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="F7h-4a-wXd">
+                    <rect key="frame" x="18" y="97" width="217" height="17"/>
+                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Emplacement bibliothèque locale :" id="vpz-TA-lsl">
+                        <font key="font" metaFont="system"/>
+                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <popUpButton verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Dig-8t-Xti">
+                    <rect key="frame" x="239" y="92" width="100" height="26"/>
+                    <constraints>
+                        <constraint firstAttribute="width" constant="95" id="qwT-qr-Y6m"/>
+                    </constraints>
+                    <popUpButtonCell key="cell" type="push" title="Item 1" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" selectedItem="Vhe-GA-y45" id="k7c-eG-0hx">
+                        <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
+                        <font key="font" metaFont="menu"/>
+                        <menu key="menu" id="xZ7-uc-7wh">
+                            <items>
+                                <menuItem title="Item 1" state="on" id="Vhe-GA-y45"/>
+                                <menuItem title="Item 2" id="zS1-XF-aPP"/>
+                                <menuItem title="Item 3" id="Tfl-8v-AL0"/>
+                            </items>
+                        </menu>
+                    </popUpButtonCell>
+                </popUpButton>
+                <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="ZpC-nn-GNi">
+                    <rect key="frame" x="125" y="13" width="230" height="32"/>
+                    <buttonCell key="cell" type="push" title="Importer fichiers déjà existants" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="u5k-ME-209">
+                        <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                </button>
+                <button translatesAutoresizingMaskIntoConstraints="NO" id="6Ec-dT-KQy">
+                    <rect key="frame" x="106" y="62" width="268" height="18"/>
+                    <buttonCell key="cell" type="check" title="Copier les fichiers dans la bibliothèques" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="yWH-gn-oCs">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                </button>
+            </subviews>
+            <constraints>
+                <constraint firstItem="ZpC-nn-GNi" firstAttribute="centerX" secondItem="Hz6-mo-xeY" secondAttribute="centerX" id="61d-bh-7O2"/>
+                <constraint firstItem="6Ec-dT-KQy" firstAttribute="centerX" secondItem="ZpC-nn-GNi" secondAttribute="centerX" id="MIb-yF-rpO"/>
+                <constraint firstItem="Dig-8t-Xti" firstAttribute="centerY" secondItem="F7h-4a-wXd" secondAttribute="centerY" id="OX2-fK-N3C"/>
+                <constraint firstAttribute="bottom" secondItem="ZpC-nn-GNi" secondAttribute="bottom" constant="20" symbolic="YES" id="Xb1-sp-Z7X"/>
+                <constraint firstItem="Dig-8t-Xti" firstAttribute="leading" secondItem="F7h-4a-wXd" secondAttribute="trailing" constant="8" symbolic="YES" id="otk-AM-gTP"/>
+                <constraint firstItem="6Ec-dT-KQy" firstAttribute="top" secondItem="Dig-8t-Xti" secondAttribute="bottom" constant="17" id="qbL-r6-44M"/>
+                <constraint firstItem="F7h-4a-wXd" firstAttribute="leading" secondItem="Hz6-mo-xeY" secondAttribute="leading" constant="20" symbolic="YES" id="tx6-5E-uYR"/>
+                <constraint firstItem="6Ec-dT-KQy" firstAttribute="centerY" secondItem="Hz6-mo-xeY" secondAttribute="centerY" id="vO0-Dv-TfU"/>
+            </constraints>
+            <point key="canvasLocation" x="538" y="168.5"/>
+        </customView>
+    </objects>
+</document>

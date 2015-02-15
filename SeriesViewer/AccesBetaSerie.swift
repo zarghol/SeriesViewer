@@ -8,115 +8,127 @@
 
 import Foundation
 
-class AccesBetaSerie : NSObject{
+class AccesBetaSerie : NSObject {
     
-    private let cleAPI = ""
-    private let betaSerie: BetaSeries
+    private var betaSerie: BetaSeries
     
-    private(set) var member: Member?
+    private(set) var member: Member? {
+        didSet {
+            self.betaSerie = BetaSeries(token: self.member?.token)
+        }
+    }
+    private(set) var searchResult: [Serie]?
+    
+    var series: [Serie] {
+        return Persistance.acces.series
+    }
     
     internal struct Static {
-        static let instance = AccesBetaSerie()
+        static var instance = AccesBetaSerie(token: Persistance.acces.token)
     }
     
     class var acces: AccesBetaSerie {
-        return Static.instance
-    }
-    
-    private(set) var token: String? {
         get {
-            return NSUserDefaults.standardUserDefaults().stringForKey("tokenBetaSerie")
+            return Static.instance
         }
         
         set {
-            if let tok = newValue {
-                NSUserDefaults.standardUserDefaults().setObject(tok, forKey:"tokenBetaSerie")
-            } else {
-                NSUserDefaults.standardUserDefaults().removeObjectForKey("tokenBetaSerie")
+            Static.instance = newValue
+        }
+    }
+    
+    var seriesComplete:Int
+    
+    init(token: String? = nil) {
+        
+        self.betaSerie = BetaSeries(token: token)
+        self.seriesComplete = 0
+        if let tok = token {
+            self.member = Member(token: tok)
+        }
+    }
+    
+    func accountCreation(login: String, password: String, email: String) {
+        self.betaSerie.createAccount(login, password: password, email: email) { member in
+            self.member = member
+            Persistance.acces.token = member.token
+
+        }
+    }
+    
+    func memberLogin(login: String, password: String, completion: (NSError?) -> ()) {
+        self.betaSerie.login(login, password: password, completion: { member in
+            self.member = member
+            Persistance.acces.token = member.token
+
+            completion(nil)
+        }, handleError: { error in
+            completion(error)
+        })
+    }
+    
+    func getMemberInformation() {
+        self.betaSerie.retrieveMemberInformation(true) { json in
+            self.member?.retrieveInformation(json)
+        }
+    }
+    
+    func retrieveSeries(bannerDimension: CGSize, completion: () -> ()) {
+        self.betaSerie.retrieveListSeries(bannerDimension) { series in
+            Persistance.acces.initTemp(series)
+            completion()
+        }
+    }
+    
+    func memberLogout() {
+        self.betaSerie.destroyToken()
+        self.member = nil
+        Persistance.acces.token = nil
+
+    }
+    
+    func isLoggedIn() -> Bool {
+        return self.member != nil && self.member!.token != ""
+    }
+    
+    func searchSeries(text: String, completion: ([Serie]) -> ()) {
+        self.searchResult?.removeAll()
+        self.betaSerie.searchShow(text) { result in
+            self.searchResult = result
+            completion(result)
+        }
+    }
+    
+    func checkOnlineToken(completion: (Bool) -> ()) {
+        self.betaSerie.isActiveToken() { isActive in
+            completion(isActive)
+        }
+    }
+    
+    func markAsWatched(episode:Episode) {
+        self.betaSerie.markAsWatched(episode)
+    }
+    
+    func markANote(episode:Episode) {
+        self.betaSerie.markANote(episode)
+    }
+    
+    func archiveSerie(serie:Serie) {
+        self.betaSerie.archive(serie)
+    }
+    
+    func addToAccount(serie: Serie) {
+        self.betaSerie.addToAccount(serie) { successful in
+            if successful {
+                Persistance.acces.series.append(serie)
             }
         }
     }
     
-    var seriesComplete:Int = 0
-    
-    override init() {
-        
-        self.betaSerie = BetaSeries(apiKey: self.cleAPI)
-        
-        super.init()
-        
-        self.betaSerie.token = self.token ?? ""
-        
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "recuperationToken:", name: "recuperationToken", object: nil)
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "finVerificationToken", name: "tokenActive", object: nil)
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "finRecupereSeries:", name: "resultatMembre", object: nil)
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "finRecupereSerie", name: "serieComplete", object: nil)
-
-    }
-    
-    func verifieToken() {
-        if let token = self.token {
-            self.betaSerie.isActiveToken()
-        } else {
-            NSNotificationCenter.defaultCenter().postNotificationName("afficheDemandeMembre", object: self)
+    func correspondFilename(url: NSURL) {
+        self.betaSerie.scraper(url) { episodeId, serieId in
+            NSLog("url : \(url)")
+            Persistance.acces.addLink(url, toEpisode: episodeId, inSerie: serieId)
         }
     }
-    
-    func connexionMembre(identifiant: String, password: String) {
-        NSLog("demande de token")
-        self.betaSerie.obtainTokenWithUsername(identifiant, password: password)
-    }
-    
-    func recuperationToken(notification: NSNotification) {
-        if let token = notification.userInfo?["token"] as? String {
-            self.token = token
-            self.betaSerie.token = token
-            self.recupereSeries()
-        }
-    }
-    
-    func deconnexion() {
-        self.token = nil
-        NSNotificationCenter.defaultCenter().postNotificationName("recuperationSeries", object: self, userInfo:["series" : [Serie]()])
-    }
-    
-    func recupereSeries() {
-        NSLog("recupere series")
-        self.betaSerie.recupSeries()
-    }
-    
-    
-//    func recupereSerieEntiere(serie: Serie) {
-//        self.betaSerie.recupSerie(serie)
-//    }
-    
-    func finRecupereSeries(notification: NSNotification) {
-        if let member = notification.userInfo?["member"] as? Member {
-            println("member stocke !")
-            self.member = member
-        }
-        
-        if let series = notification.userInfo?["series"] as? [Serie] {
-            self.seriesComplete = series.count
-            NSNotificationCenter.defaultCenter().postNotificationName("recuperationSeries", object: self, userInfo:["series" : series])
-        }
-    }
-    
-    func finRecupereSerie() {
-        if --self.seriesComplete <= 0 {
-            // envoi notification signalement mise a jour series
-            NSNotificationCenter.defaultCenter().postNotificationName("seriesCompletes", object: self)
-        }
-    }
-    
-    func chercheSerie(nom: String) {
-        self.betaSerie.searchShow(nom)
-    }
-    
-    
-    func marqueVue(episode:Episode) {
-        self.betaSerie.markAsWatched(episode)
-    }
-    
-
 }

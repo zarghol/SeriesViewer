@@ -8,237 +8,228 @@
 
 import Foundation
 
+let betaseries_user_agent = "Swift BetaSeries Library - ClemNonn (1.0)"
+let betaseries_version_api = "2.4"
+
 class BetaSeries {
-    var apiKey: String
-    var token: String
+    private let session: NSURLSession
+    private var apiKey: String
+    private let token: String?
     
-    let timeout: NSTimeInterval
-    
-    init() {
-        self.apiKey = ""
-        self.token = ""
-        self.timeout = 20
-    }
-    
-    convenience init(apiKey:String, token: String = "") {
-        self.init()
-        self.apiKey = apiKey
+    init(token: String? = nil) {
+        self.apiKey = "e88a334499a9"
         self.token = token
-    }
-    
-    func registerWithUsername(username: String, password: String, email:String) -> [AnyObject]? {
-        // TODO: coder cette méthode
-        return nil
-    }
-    
-    func obtainTokenWithUsername(username: String, password:String) {
-        self.obtainTokenWithUsername(username, passwordMD5: password.MD5String)
-    }
-    
-    func obtainTokenWithUsername(username: String, passwordMD5: String) {
-        NSLog("construction de la requete")
-        var request = BSRequest()
-        request.apiKey = self.apiKey
-        request.category = BSRequestCategory.Members
-        request.method = BSRequestMethod.Auth
         
-        request.options["login"] = username
-        request.options["password"] = passwordMD5
+        let conf = NSURLSessionConfiguration.defaultSessionConfiguration()
         
-        request.send(completionHandler:{ root in
-            
-            if let token = root["member"]["token"].stringValue {
-                NSNotificationCenter.defaultCenter().postNotificationName("recuperationToken", object: self, userInfo:["token" : token])
-                NSLog("token : \(token)")
-            }
-        }, handleError: { error in
-            NSLog("errorToken")
-            if error.code == 4003 {
-                NSNotificationCenter.defaultCenter().postNotificationName("mauvaisPassword", object: self)
-            }
-        })
-    }
-    
-    func searchShow(name:String) {
-        //https://api.betaseries.com/shows/search
+        var dico: [NSObject : AnyObject] = ["User-Agent" : betaseries_user_agent,
+                                            "X-BetaSeries-Key" : self.apiKey,
+                                            "X-BetaSeries-Version" : betaseries_version_api]
         
-        var request = BSRequest()
-        request.apiKey = self.apiKey
-        request.token = self.token
-        request.category = BSRequestCategory.Shows
-        request.method = BSRequestMethod.Search
-        
-        request.options["title"] = name
-        
-        request.send(completionHandler: { root in
-            
-            var noms = [String]()
-            
-            
-            // TODO: revoir si ça marche
-            
-            
-            if let shows = root["shows"].dictionaryValue {
-                for i in 0..<(shows.count > 5 ? 5 : shows.count) {
-                    
-                    if let nom = shows["\(i)"]?["title"].stringValue {
-                        noms.append(nom)
-                    }
-                }
-            }
-            NSNotificationCenter.defaultCenter().postNotificationName("resultatRecherche", object: self, userInfo:["mots" : noms])
-        }, handleError: self.didFail)
-    }
-    
-    func recupSeries() {
-        var request = BSRequest()
-        request.apiKey = self.apiKey
-        request.token = self.token
-        request.category = BSRequestCategory.Members
-        request.method = BSRequestMethod.Infos
-        
-        request.send(completionHandler: { root in
-            let member = root["member"]
-            
-            let series: [Serie] = member["shows"].arrayValue!.map { return self.fillSerie($0) }
-
-            
-            
-            let login = member["login"].stringValue!
-            let avatarUrl = member["avatar"].stringValue ?? ""
-            var badges = member["stats"]["badges"].integerValue ?? 0
-            var episodes = member["stats"]["episodes"].integerValue ?? 0
-            var progress: Float = member["stats"]["progress"].floatValue ?? 0.0
-            var seasons = member["stats"]["seasons"].integerValue ?? 0
-            var showsStats = member["stats"]["shows"].integerValue ?? 0
-
-            var memb = Member(login: login, nbBadges: badges, nbEpisodes: episodes, progress: progress, seasons: seasons, nbShows: showsStats)
-            // TODO: envoyer membre
-            let userInfo : [String: NSObject] = ["series" : series, "member" : memb]
-            NSNotificationCenter.defaultCenter().postNotificationName("resultatMembre", object: self, userInfo:userInfo)
-
-        }, handleError:self.didFail)
-    }
-    
-    private func fillSerie(show:JSON) -> Serie {
-        let title = show["title"].stringValue!
-        let active = !show["user"]["archived"].boolValue
-        let url = show["resource_url"].stringValue!
-        
-        var serie = Serie(nom: title, active: active, url: url)
-        
-        serie.id = show["id"].integerValue!
-        serie.id_thetvdb = show["thetvdb_id"].integerValue!
-        serie.descriptionSerie = show["description"].stringValue!
-        serie.anneeCreation = show["creation"].integerValue!
-        serie.genres = show["genres"].arrayValue!.map{ return $0.stringValue! }
-        serie.status = StatutSeries(rawValue: show["status"].stringValue!)!
-        serie.dureeEpisode = show["length"].integerValue!
-        
-        let nbSaison = show["seasons"].integerValue!
-        for i in 1...nbSaison {
-            serie.creerSaison(i)
+        if let token = self.token {
+            dico["X-BetaSeries-Token"] = token
         }
         
-        Async.background {
-            self.recupBanner(serie)
-            self.recupEpisodes(serie)
-        }
+        conf.HTTPAdditionalHeaders = dico
         
-        
-        return serie
+        self.session = NSURLSession(configuration:conf)
     }
     
-    func recupBanner(var serie: Serie) {
-        var request = BSRequest()
-        request.apiKey = self.apiKey
-        request.token = self.token
-        request.category = BSRequestCategory.Shows
-        request.method = BSRequestMethod.Pictures
-        request.options["id"] = "\(serie.id)"
+    func login(username: String, password:String, completion: (Member) -> (), handleError: (NSError) -> ()) {
+        self.login(username, passwordMD5: password.MD5String, completion: completion, handleError:handleError)
+    }
+    
+    func login(username: String, passwordMD5: String, completion: (Member) -> (), handleError: (NSError) -> ()) {
+        var request = self.buildRequest(.Members, .Auth, .Post)
+        request.addOption(username, forName:"login")
+        request.addOption(passwordMD5, forName:"password")
         
-        request.send(completionHandler: { root in
-            let pictures = root["pictures"].arrayValue!
-            
-            for pic in pictures {
-                if pic["picked"].stringValue! == "banner" {
-                    let url = pic["url"].stringValue!
-                    serie.banner = url
-                    NSNotificationCenter.defaultCenter().postNotificationName("banniereRecupere", object: self)
-                    return
-                }
+        request.send(completionHandler:{ json in
+            if let token = json["token"].string {
+                var member = Member(token: token)
+                completion(member)
+            }
+        }, handleError: handleError)
+    }
+    
+    func createAccount(username: String, password: String, email:String, completion: (Member) -> ()) {
+        var request = self.buildRequest(.Members, .SignUp, .Post)
+        request.addOption(username, forName: "login")
+        request.addOption(password.MD5String, forName: "password")
+        request.addOption(email, forName: "email")
+        
+        request.send(completionHandler: {json in
+            if let token = json["token"].string {
+                var member = Member(token: token)
+                completion(member)
             }
         }, handleError:self.didFail)
-    }
-    
-    func recupEpisodes(var serie: Serie) {
-        var request = BSRequest()
-        request.apiKey = self.apiKey
-        request.token = self.token
-        request.category = BSRequestCategory.Shows
-        request.method = BSRequestMethod.Episodes
-        request.options["id"] = "\(serie.id)"
-        
-        request.send(completionHandler: { root in
-            
-            for ep in root["episodes"].arrayValue! {
-                let nom = ep["title"].stringValue!
-                let description = ep["description"].stringValue!
-                let numEpisode = ep["episode"].integerValue!
-                let numSaison = ep["season"].integerValue!
-                let id = ep["id"].integerValue!
-                let watched = ep["user"]["seen"].boolValue
-                
-                var episode = Episode(nom: nom, numEpisode: numEpisode, id: id, vue: watched, description: description)
-                
-                serie.ajouterEpisode(episode, aSaison: numSaison)
-            }
-            
-            serie.trie()
-            NSNotificationCenter.defaultCenter().postNotificationName("seriesCompletes", object: self)
-            }, handleError:{
-                NSLog("erreur de recupEpisode pour : \(serie.nomItem)")
-                self.didFail($0)
-            })
-    }
-    
-    
-    func isActiveToken() {
-        var request = BSRequest()
-        request.apiKey = self.apiKey
-        request.token = self.token
-        request.category = BSRequestCategory.Members
-        request.method = BSRequestMethod.IsActive
-        request.send(completionHandler: { root in
-            NSNotificationCenter.defaultCenter().postNotificationName("tokenActive", object: self)
-            NSLog("token valide")
-            }, handleError: { error in
-                self.didFail(error)
-                NSNotificationCenter.defaultCenter().postNotificationName("afficheDemandeMembre", object: self)
-        })
     }
     
     func destroyToken() {
-        var request = BSRequest()
-        request.apiKey = self.apiKey
-        request.token = self.token
-        request.category = BSRequestCategory.Members
-        request.method = BSRequestMethod.Destroy
+        var request = self.buildRequest(.Members, .Destroy, .Post)
+        // envoyer notification pour notifier de la déconnexion coté serveur ?
         request.send(completionHandler: {_ in }, handleError: self.didFail)
     }
     
+    func retrieveMemberInformation(summary: Bool, completion: (JSON) -> ()) {
+        var request = self.buildRequest(.Members, .Infos)
+        if summary {
+            request.addOption("true", forName: "summary")
+        }
+        request.send(completionHandler: {json in
+            completion(json)
+            // on envoi directement le json
+        }, handleError: self.didFail)
+    }
+    
+    func retrieveListSeries(bannerDimension: CGSize, completion: ([Serie]) -> ()) {
+        var request = self.buildRequest(.Members, .Infos)
+        
+        request.send(completionHandler: { root in
+            let series: [Serie] = root["member"]["shows"].arrayValue.map {
+                var serie = Serie(json: $0)
+                self.retrieveBannerAndEpisodes(serie, bannerDimension: bannerDimension)
+                return serie
+            }
+            completion(series)
+            
+        }, handleError:self.didFail)
+    }
+    
+    func retrieveBannerAndEpisodes(var serie: Serie, bannerDimension: CGSize) {
+        self.retrieveEpisodes(serie)
+        self.retrieveBanner(serie, bannerDimension: bannerDimension)
+    }
+    
+    func retrieveBanner(var serie: Serie, bannerDimension: CGSize) {
+        var request = self.buildRequest(.Pictures, .Shows)
+        request.addOption(String(serie.id), forName: "id")
+        request.addOption("picked", forName: "banner")
+        request.addOption("\(Int(bannerDimension.height))", forName: "height")
+        request.addOption("\(Int(bannerDimension.width))", forName: "width")
+
+        
+        request.retrieveImage{ image in
+            NSLog("recupImage")
+            serie.banner = image
+            NSNotificationCenter.defaultCenter().postNotificationName(NotificationsNames.banniereRecupere.rawValue, object: nil, userInfo: ["serie" : serie])
+        }
+    }
+    
+    func retrieveEpisodes(var serie: Serie) {
+        if serie.saisons.count > 0 {
+            serie.saisons.removeAll()
+        }
+        var request = self.buildRequest(.Shows, .Episodes)
+        request.addOption(String(serie.id), forName: "id")
+        
+        var js = JSON(2)
+        js.arrayValue
+
+        
+        request.send(completionHandler: { root in
+            for episodeJson in root["episodes"].arrayValue {
+                var episode = Episode(json: episodeJson)
+                serie.ajouterEpisode(episode, aSaison: episodeJson["season"].intValue)
+            }
+            NSLog("recupEpisodes")
+
+            serie.trie()
+            NSNotificationCenter.defaultCenter().postNotificationName(NotificationsNames.episodesRecupere.rawValue, object: nil, userInfo: ["serie" : serie])
+        }, handleError:{
+            NSLog("erreur de recupEpisode pour : \(serie.nomItem)")
+            self.didFail($0)
+        })
+    }
+    
+    func searchShow(name:String, completion:([Serie]) -> ()) {
+        var request = self.buildRequest(.Shows, .Search)
+        request.addOption(name, forName: "title")
+        
+        request.send(completionHandler: { root in
+            
+            var series = root["shows"].arrayValue.map {
+                return Serie(json: $0)
+            }
+            completion(series)
+
+        }, handleError: self.didFail)
+    }
+    
     func markAsWatched(episode: Episode) {
-        var request = BSRequest()
-        request.apiKey = self.apiKey
-        request.token = self.token
-        request.category = BSRequestCategory.Episodes
-        request.method = BSRequestMethod.Watched
-        request.options["id"] = "\(episode.id)"
+        var request = self.buildRequest(.Episodes, .Watched, (episode.vue ? .Post : .Delete))
+        request.addOption(String(episode.id), forName: "id")
         
         request.send(completionHandler: {_ in }, handleError: self.didFail)
     }
     
+    func markANote(episode: Episode) {
+        var request = self.buildRequest(.Episodes, .Note, .Post)
+        request.addOption(String(episode.id), forName: "id")
+        request.addOption(String(episode.note), forName: "note")
+        
+        request.send(completionHandler: {_ in }, handleError: self.didFail)
+    }
+    
+    func addToAccount(serie: Serie, completion: (Bool) -> ()) {
+        var request = self.buildRequest(.Shows, .Show, .Post)
+        request.addOption(String(serie.id), forName: "id")
+        
+        request.send(completionHandler: {_ in
+            completion(true)
+        }, handleError: { error in
+            completion(false)
+            self.didFail(error)
+        })
+    }
+    
+    func archive(serie: Serie) {
+        var request = self.buildRequest(.Shows, .Archive, (serie.active ? .Delete : .Post))
+        request.addOption(String(serie.id), forName: "id")
+        
+        request.send(completionHandler: {_ in }, handleError: self.didFail)
+    }
+
+    
+    func isActiveToken(completion: (Bool) -> ()) {
+        var request = self.buildRequest(.Members, .IsActive)
+        request.send(completionHandler: { root in
+            completion(true)
+            NSLog("token valide")
+        }, handleError: { error in
+            self.didFail(error)
+            completion(false)
+        })
+    }
+    
+    func scraper(filename: NSURL, completion: (Int, Int) -> ()) {
+        var request = self.buildRequest(.Episodes, .Scraper)
+        request.addOption(filename.lastPathComponent!, forName: "file")
+        
+        request.send(completionHandler: {json in
+            let episodeId = json["episode"]["id"].intValue
+            let serieId = json["episode"]["show"]["id"].intValue
+            completion(episodeId, serieId)
+        }, handleError: self.didFail)
+    }
+    
+    
     func didFail(error: NSError) {
         NSLog("erreur : \(error)")
+    }
+    
+    private func buildRequest(category: BSRequestCategory, _ method: BSRequestMethod, _ httpMethod: HttpMethod = HttpMethod.Get) -> BSRequest {
+        var request = BSRequest(apiKey: self.apiKey, session: self.session)
+        
+        if let token = self.token {
+            request.token = token
+        }
+        
+        request.category = category
+        request.method = method
+        request.httpMethod = httpMethod
+        
+        return request
     }
 }

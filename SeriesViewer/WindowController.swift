@@ -10,12 +10,31 @@ import Cocoa
 import AppKit
 
 class WindowController: NSWindowController, NSToolbarDelegate, NSSplitViewDelegate {
+    
+    private var panels: [NSViewController]!
+    private var actualPanelSelected: Int!
 
     override func windowDidLoad() {
         super.windowDidLoad()
         
+        self.panels = [GeneralPanelController()!, ComptePanelController()!]
+        self.actualPanelSelected = 0
+        self.contentViewController = self.panels[self.actualPanelSelected]
+        
+        if let window = self.window, let contentViewController = self.contentViewController {
+            contentViewController.view.frame = window.contentView.frame
+            window.contentView = contentViewController.view
+        }
 
-        // Implement this method to handle any initialization after your window controller's window has been loaded from its nib file.
     }
-
+    
+    
+    @IBAction func changeOnglet(sender: NSToolbarItem) {
+        self.actualPanelSelected = sender.tag - 1
+        
+        self.contentViewController = self.panels[self.actualPanelSelected]
+        if let window = self.window, let contentViewController = self.contentViewController {
+            window.contentView = contentViewController.view
+        }
+    }
 }
